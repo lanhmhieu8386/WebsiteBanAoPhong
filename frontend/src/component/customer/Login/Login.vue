@@ -1,12 +1,10 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-//import { useUtils } from "@/utils/helper";
-//import { loginAdmin, loginCustomer } from "@/services/authService";
-
+import { useUtils } from "@/utils/helper";
 const router = useRouter();
-//const { notify, nprogress } = useUtils();
-
+const { notify, nprogress } = useUtils();
+import { login } from "@/api/customer/authApi";
 const role = ref("customer");
 const username = ref("");
 const password = ref("");
@@ -18,29 +16,25 @@ const handleLogin = async () => {
     isLoading.value = true;
     nprogress.start();
 
-    let res;
-
-    if (role.value === "admin") {
-      res = await loginAdmin({
-        taiKhoan: username.value,
-        matKhau: password.value,
-      });
-    } else {
-      res = await loginCustomer({
-        email: username.value,
-        matKhau: password.value,
-      });
-    }
+    const res = await login({
+      email: username.value,
+      password: password.value,
+    });
 
     const data = res.data;
-    console.log("LOGIN DATA:", res.data);
+
+    console.log("LOGIN DATA:", data);
+
     localStorage.setItem("token", data.token);
-    localStorage.setItem("name", data.name);
-    localStorage.setItem("avatar", data.avatar);
     localStorage.setItem("role", data.role);
+    localStorage.setItem("email", data.email);
+    localStorage.setItem("loginTime", Date.now());
+    localStorage.setItem("name", data.name);
+
     notify.success("Đăng nhập thành công");
 
-    if (role.value === "admin") {
+    // redirect theo role
+    if (data.role === "ADMIN" || data.role === "NHAN_VIEN") {
       router.push("/admin/tong-quan");
     } else {
       router.push("/");
@@ -51,9 +45,6 @@ const handleLogin = async () => {
     isLoading.value = false;
     nprogress.done();
   }
-};
-const loginWithGoogle = () => {
-  alert("Tính năng đăng nhập google đang được phát triển! 🚀");
 };
 
 const goToRegister = () => {

@@ -1,126 +1,49 @@
 <script setup>
-import { ref, reactive, onMounted, watch } from "vue";
+import { reactive } from "vue";
 import { useRouter } from "vue-router";
-// import { getProvinces, getProvinceDetail } from "@/api/diachi/diaChiApi";
-// import { useUtils } from "@/utils/helper";
-// import { registerCustomer } from "@/api/customer/registerApi";
-//const { notify, nprogress } = useUtils();
+import { useUtils } from "@/utils/helper";
+
+const { notify, nprogress } = useUtils();
 const router = useRouter();
-const loading = ref(false);
+import { register } from "@/api/customer/authApi";
 
 const form = reactive({
   fullname: "",
   phone: "",
   email: "",
   birthday: "",
-  gender: "Nam",
   password: "",
-  confirmPassword: "",
-  province: "",
-  ward: "",
-  street: "",
 });
-const provinces = ref([]);
-const combinedWards = ref([]);
-
-onMounted(async () => {
-  try {
-    //  const res = await getProvinces();
-    console.log("DATA TỈNH:", res);
-    provinces.value = res;
-  } catch (error) {
-    console.error("lỗi lấy tỉnh thành:", error);
-  }
-});
-watch(
-  () => form.province,
-  async (newVal) => {
-    combinedWards.value = [];
-    form.ward = "";
-
-    if (!newVal) return;
-
-    try {
-      const selectedProv = provinces.value.find((p) => p.name === newVal);
-
-      if (selectedProv) {
-        // const res = await getProvinceDetail(selectedProv.code);
-
-        const flatList = [];
-
-        res.districts.forEach((district) => {
-          district.wards.forEach((ward) => {
-            flatList.push({
-              fullAddress: `${ward.name}, ${district.name}`,
-              code: ward.code,
-            });
-          });
-        });
-
-        combinedWards.value = flatList.sort((a, b) =>
-          a.fullAddress.localeCompare(b.fullAddress),
-        );
-      }
-    } catch (error) {
-      console.error("lỗi lấy dữ liệu địa chỉ:", error);
-    }
-  },
-);
 const dangKyKhachHang = async () => {
-  if (form.password !== form.confirmPassword) {
-    notify.error("Mật khẩu xác nhận không khớp!");
-    return;
-  }
-
   if (!(await notify.confirm("Bạn muốn đăng ký tài khoản này?"))) return;
 
   nprogress.start();
 
   try {
     const payload = {
-      hoTen: form.fullname,
-      soDienThoai: form.phone.replace(/\s/g, ""),
+      name: form.fullname,
       email: form.email,
-      ngaySinh: form.birthday,
-      gioiTinh: form.gender === "Nam",
-      matKhau: form.password,
-      diaChiList: [
-        {
-          tinhThanh: form.province,
-          xaPhuong: form.ward,
-          diaChiChiTiet: form.street,
-          macDinh: true,
-        },
-      ],
+      password: form.password,
+      phone: form.phone,
+      ngaySinh: form.birthday, // yyyy-MM-dd
     };
 
-    const formData = new FormData();
+    console.log("REGISTER DATA:", payload);
 
-    formData.append(
-      "data",
-      new Blob([JSON.stringify(payload)], {
-        type: "application/json",
-      }),
-    );
+    await register(payload);
 
-    const res = await registerCustomer(formData);
-
-    notify.success(res.data?.message || "Đăng ký thành công!");
+    notify.success("Đăng ký thành công!");
 
     router.push("/dang-nhap");
-  } catch (e) {
-    console.error("REGISTER ERROR:", e);
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
 
-    notify.error(
-      e.response?.data?.message ||
-        e.response?.data ||
-        e.message ||
-        "Lỗi hệ thống",
-    );
+    notify.error(error.response?.data?.message || "Đăng ký thất bại");
   } finally {
     nprogress.done();
   }
 };
+
 const goLogin = () => {
   router.push("/dang-nhap");
 };
@@ -148,181 +71,62 @@ const goLogin = () => {
 
         <form @submit.prevent="dangKyKhachHang" class="premium-form">
           <div class="row g-4">
-            <div class="col-md-6 border-end-custom">
-              <h5 class="section-title">
-                <i class="bi bi-person-lines-fill me-2"></i>Thông tin cá nhân
-              </h5>
-
-              <div class="input-group-premium mb-3">
-                <label>Họ và tên <span class="required">*</span></label>
+            <div class="col-md-6">
+              <div class="input-group-premium">
+                <label>Họ và tên</label>
                 <div class="input-wrapper">
                   <i class="bi bi-person"></i>
-                  <input
-                    v-model="form.fullname"
-                    type="text"
-                    placeholder="Nguyễn Văn A"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div class="input-group-premium mb-3">
-                <label>Số điện thoại <span class="required">*</span></label>
-                <div class="input-wrapper">
-                  <i class="bi bi-telephone"></i>
-                  <input
-                    v-model="form.phone"
-                    type="tel"
-                    placeholder="0987 654 321"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div class="input-group-premium mb-3">
-                <label>Email <span class="required">*</span></label>
-                <div class="input-wrapper">
-                  <i class="bi bi-envelope"></i>
-                  <input
-                    v-model="form.email"
-                    type="email"
-                    placeholder="example@gmail.com"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="col-sm-5">
-                <div class="input-group-premium mb-3">
-                  <label>Giới tính</label>
-                  <div class="gender-selector">
-                    <label class="gender-option">
-                      <input type="radio" value="Nam" v-model="form.gender" />
-                      <span class="custom-radio">Nam</span>
-                    </label>
-                    <label class="gender-option">
-                      <input type="radio" value="Nữ" v-model="form.gender" />
-                      <span class="custom-radio">Nữ</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-sm-7">
-                  <div class="input-group-premium mb-3">
-                    <label>Ngày sinh <span class="required">*</span></label>
-                    <div class="input-wrapper">
-                      <i class="bi bi-calendar-event"></i>
-                      <input v-model="form.birthday" type="date" required />
-                    </div>
-                  </div>
+                  <input v-model="form.fullname" type="text" required />
                 </div>
               </div>
             </div>
 
             <div class="col-md-6">
-              <h5 class="section-title">
-                <i class="bi bi-geo-alt me-2"></i>Địa chỉ nhận hàng
-              </h5>
-
-              <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                  <label class="small fw-semibold">Tỉnh / Thành phố</label>
-                  <div class="select-wrapper">
-                    <select
-                      v-model="form.province"
-                      class="form-control-premium"
-                    >
-                      <option value="">Chọn tỉnh / thành</option>
-                      <option
-                        v-for="p in provinces"
-                        :key="p.code"
-                        :value="p.name"
-                      >
-                        {{ p.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="small fw-semibold">Phường / Xã</label>
-                  <div class="select-wrapper">
-                    <select
-                      v-model="form.ward"
-                      class="form-control-premium"
-                      :disabled="!form.province"
-                    >
-                      <option value="">Chọn phường / xã</option>
-                      <option
-                        v-for="item in combinedWards"
-                        :key="item.code"
-                        :value="item.fullAddress"
-                      >
-                        {{ item.fullAddress }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div class="input-group-premium mb-4">
-                <label>Địa chỉ cụ thể</label>
+              <div class="input-group-premium">
+                <label>Số điện thoại</label>
                 <div class="input-wrapper">
-                  <i class="bi bi-house"></i>
-                  <input
-                    v-model="form.street"
-                    type="text"
-                    placeholder="Số nhà, tên đường"
-                  />
+                  <i class="bi bi-telephone"></i>
+                  <input v-model="form.phone" type="text" required />
                 </div>
               </div>
+            </div>
 
-              <div class="security-section">
-                <h5 class="section-title">
-                  <i class="bi bi-shield-lock me-2"></i>Bảo mật tài khoản
-                </h5>
-
-                <div class="input-group-premium mb-3">
-                  <label>Mật khẩu <span class="required">*</span></label>
-                  <div class="input-wrapper">
-                    <i class="bi bi-lock"></i>
-                    <input
-                      v-model="form.password"
-                      type="password"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
+            <div class="col-md-6">
+              <div class="input-group-premium">
+                <label>Email</label>
+                <div class="input-wrapper">
+                  <i class="bi bi-envelope"></i>
+                  <input v-model="form.email" type="email" required />
                 </div>
+              </div>
+            </div>
 
-                <div class="input-group-premium mb-3">
-                  <label
-                    >Xác nhận mật khẩu <span class="required">*</span></label
-                  >
-                  <div class="input-wrapper">
-                    <i class="bi bi-shield-check"></i>
-                    <input
-                      v-model="form.confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
+            <div class="col-md-6">
+              <div class="input-group-premium">
+                <label>Ngày sinh</label>
+                <div class="input-wrapper">
+                  <i class="bi bi-calendar-event"></i>
+                  <input v-model="form.birthday" type="date" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="input-group-premium">
+                <label>Mật khẩu</label>
+                <div class="input-wrapper">
+                  <i class="bi bi-lock"></i>
+                  <input v-model="form.password" type="password" required />
                 </div>
               </div>
             </div>
           </div>
 
           <div class="footer-actions mt-5 text-center">
-            <button class="btn-premium" type="submit" :disabled="loading">
-              <span v-if="!loading"
-                >Hoàn tất <i class="bi bi-arrow-right ms-2"></i
-              ></span>
-              <span v-else>
-                <span class="spinner-border spinner-border-sm me-2"></span>ĐANG
-                XỬ LÝ...
-              </span>
+            <button class="btn-premium" type="submit">
+              Đăng ký <i class="bi bi-arrow-right ms-2"></i>
             </button>
+
             <p class="mt-4 text-muted small">
               Đã có tài khoản?
               <span @click="goLogin" class="login-link">Đăng nhập ngay</span>
