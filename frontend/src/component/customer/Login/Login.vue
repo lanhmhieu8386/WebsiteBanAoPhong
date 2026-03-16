@@ -226,7 +226,7 @@ const goToRegister = () => {
 .login-wrapper {
   font-family: "Plus Jakarta Sans", sans-serif;
   min-height: 100vh;
-  background: #fdfdfd url("@/assets/images/bg-ao-phong.jpg") center/cover
+  background: #fdfdfd url("@/assets/images/bannerdangnhap.jpg") center/cover
     no-repeat;
   position: relative;
   overflow: hidden;

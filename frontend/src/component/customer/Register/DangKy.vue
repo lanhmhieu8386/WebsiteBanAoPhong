@@ -143,9 +143,6 @@ const goLogin = () => {
   margin-top: 50px;
 }
 
-/* Toàn bộ style của bạn được giữ nguyên */
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
-
 .login-wrapper {
   --primary-red: #8b1e1e;
   --bg-soft: #f8f9fa;
@@ -154,7 +151,7 @@ const goLogin = () => {
   background: var(--bg-soft);
   background-image:
     linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 245, 245, 0.8)),
-    url("@/assets/images/bg-ao-2.jpg");
+    url("@/assets/images/bannerdangky.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
