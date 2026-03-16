@@ -1,11 +1,11 @@
 <template>
-  <Header />
+  <Header></Header>
 
   <section class="hero"></section>
 
   <router-view />
 
-  <Footer />
+  <Footer></Footer>
 </template>
 
 <script setup>

@@ -6,6 +6,15 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useUtils } from "@/utils/helper";
 import Testloginthanhcong from "@/component/admin/testloginthanhcong.vue";
 const { notify } = useUtils();
+
+//admin
+import TongQuan from "@/views/admin/TongQuan.vue";
+import AdminLayout from "@/views/admin/AdminLayout.vue";
+import HoaDon from "@/views/admin/HoaDon.vue";
+import SanPham from "@/views/admin/SanPham.vue";
+import DanhMuc from "@/views/admin/DanhMuc.vue";
+import SanPhamChiTiet from "@/views/admin/SanPhamChiTiet.vue";
+
 const routes = [
   {
     path: "/",
@@ -32,6 +41,23 @@ const routes = [
   },
 
   { path: "/admin/tong-quan", name: "tongQuan", component: Testloginthanhcong },
+
+  //admin
+  {
+    path: "/admin",
+    component: AdminLayout,
+    children: [
+      { path: "tong-quan", component: TongQuan },
+      { path: "hoa-don", component: HoaDon },
+      { path: "san-pham", component: SanPham },
+      {
+        path: "san-pham/:id",
+        name: "SanPhamChiTiet",
+        component: SanPhamChiTiet,
+      },
+      { path: "danh-muc", component: DanhMuc },
+    ],
+  },
 ];
 
 const router = createRouter({
