@@ -1,6 +1,11 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { getChiTietBySanPhamId } from "@/api/admin/sanphamchitiet/sanPhamChiTietApi";
+import { getAllDanhMuc } from "@/api/admin/danhmuc/danhMucApi";
+import { getAllThuongHieu } from "@/api/admin/thuonghieu/ThuongHieuApi";
+import { getAllChatLieu } from "@/api/admin/chatlieu/ChatLieuApi";
+import { updateSanPham, getSanPhamById } from "@/api/admin/sanpham/sanPhamApi";
 
 const showEdit = ref(false);
 const editIndex = ref(null);
@@ -15,64 +20,59 @@ const route = useRoute();
 
 const sanPham = ref(null);
 const chiTietList = ref([]);
+const danhMucList = ref([]);
+const thuongHieuList = ref([]);
+const chatLieuList = ref([]);
 
-const fakeData = [
-  {
-    id: 1,
-    ten: "Áo thun nam",
-    danhMuc: "Thời trang",
-    moTa: "Áo thun cotton co giãn",
-    chiTiet: [
-      {
-        mau: "Đỏ",
-        size: "M",
-        gia: 250000,
-        soLuong: 20,
-        hinh: "https://via.placeholder.com/60",
-      },
-      {
-        mau: "Đỏ",
-        size: "L",
-        gia: 250000,
-        soLuong: 30,
-        hinh: "https://via.placeholder.com/60",
-      },
-    ],
-  },
+const loadSanPham = async () => {
+  try {
+    const id = parseInt(route.params.id);
+    if (!id) return;
 
-  {
-    id: 2,
-    ten: "Giày sneaker",
-    danhMuc: "Giày dép",
-    moTa: "Sneaker thể thao",
-    chiTiet: [
-      {
-        mau: "Trắng",
-        size: "40",
-        gia: 850000,
-        soLuong: 10,
-        hinh: "https://via.placeholder.com/60",
-      },
-      {
-        mau: "Đen",
-        size: "41",
-        gia: 850000,
-        soLuong: 20,
-        hinh: "https://via.placeholder.com/60",
-      },
-    ],
-  },
-];
+    // 👉 gọi API sản phẩm
+    const spRes = await getSanPhamById(id);
+    const spData = spRes.data?.data || spRes.data;
 
-const loadSanPham = () => {
-  const id = Number(route.params.id);
+    sanPham.value = {
+      id: spData.id,
+      maSanPham: spData.maSanPham,
+      ten: spData.tenSanPham,
+      idDanhMuc: spData.idDanhMuc || spData.danhMuc?.id,
+      idThuongHieu: spData.idThuongHieu || spData.thuongHieu?.id,
+      idChatLieu: spData.idChatLieu || spData.chatLieu?.id,
+      moTa: spData.moTa,
+      trangThai: spData.trangThai,
+    };
 
-  const sp = fakeData.find((p) => p.id === id);
+    // 👉 gọi API chi tiết
+    const res = await getChiTietBySanPhamId(id);
+    const data = res.data?.data || res.data || [];
 
-  if (sp) {
-    sanPham.value = sp;
-    chiTietList.value = sp.chiTiet;
+    chiTietList.value = data.map((ct) => ({
+      id: ct.id,
+      mau: ct.tenMauSac,
+      size: ct.tenKichCo,
+      gia: ct.gia,
+      soLuong: ct.soLuong,
+      hinh: ct.urlAnh || "https://via.placeholder.com/60",
+    }));
+  } catch (error) {
+    console.error("Lỗi load:", error);
   }
+};
+
+const addVariant = () => {
+  editIndex.value = null; // phân biệt add vs edit
+
+  formEdit.value = {
+    mau: "",
+    size: "",
+    gia: 0,
+    soLuong: 0,
+    hinh: "https://via.placeholder.com/60",
+  };
+
+  showEdit.value = true;
 };
 
 const editVariant = (index) => {
@@ -85,10 +85,33 @@ const editVariant = (index) => {
   showEdit.value = true;
 };
 
-const saveEdit = () => {
-  chiTietList.value[editIndex.value] = { ...formEdit.value };
+const saveEdit = async () => {
+  try {
+    const data = {
+      mauSac: formEdit.value.tenMauSac,
+      kichCo: formEdit.value.tenKichCo,
+      gia: formEdit.value.gia,
+      soLuong: formEdit.value.soLuong,
+      urlAnh: formEdit.value.hinh,
+      sanPhamId: sanPham.value.id,
+    };
 
-  showEdit.value = false;
+    if (editIndex.value !== null) {
+      // 👉 UPDATE
+      const id = chiTietList.value[editIndex.value].id;
+
+      await updateSanPhamChiTiet(id, data);
+    } else {
+      // 👉 ADD
+      await addSanPhamChiTiet(data);
+    }
+
+    await loadSanPham(); // reload lại data
+    showEdit.value = false;
+  } catch (error) {
+    console.error(error);
+    alert("Lỗi khi lưu biến thể");
+  }
 };
 
 const onFileChange = (e) => {
@@ -99,23 +122,84 @@ const onFileChange = (e) => {
   }
 };
 
-const saveSanPham = () => {
-  console.log("Sản phẩm sau khi sửa:", sanPham.value);
-  console.log("Biến thể:", chiTietList.value);
+const saveSanPham = async () => {
+  try {
+    if (
+      !sanPham.value.ten ||
+      !sanPham.value.idDanhMuc ||
+      !sanPham.value.idThuongHieu ||
+      !sanPham.value.idChatLieu
+    ) {
+      alert("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
 
-  alert("Đã lưu sản phẩm");
+    const data = {
+      maSanPham: sanPham.value.maSanPham,
+      tenSanPham: sanPham.value.ten,
+      idDanhMuc: Number(sanPham.value.idDanhMuc),
+      idThuongHieu: Number(sanPham.value.idThuongHieu),
+      idChatLieu: Number(sanPham.value.idChatLieu),
+      moTa: sanPham.value.moTa,
+      trangThai: sanPham.value.trangThai ?? true,
+    };
+
+    await updateSanPham(sanPham.value.id, data);
+
+    alert("Cập nhật thành công");
+
+    // 👉 reload lại data cho chắc
+    await loadSanPham();
+  } catch (error) {
+    console.error(error);
+    alert("Lỗi cập nhật");
+  }
 };
 
 const formEdit = ref({
   mau: "",
   size: "",
-  gia: "",
-  soLuong: "",
+  gia: 0,
+  soLuong: 0,
   hinh: "",
 });
 
-onMounted(() => {
-  loadSanPham();
+const loadDanhMuc = async () => {
+  try {
+    const res = await getAllDanhMuc();
+    danhMucList.value = res.data || [];
+  } catch (e) {
+    console.error("Lỗi danh mục", e);
+  }
+};
+
+const loadThuongHieu = async () => {
+  try {
+    const res = await getAllThuongHieu();
+    thuongHieuList.value = res.data || [];
+  } catch (e) {
+    console.error("Lỗi thương hiệu", e);
+  }
+};
+
+const loadChatLieu = async () => {
+  try {
+    const res = await getAllChatLieu();
+    chatLieuList.value = res.data || [];
+  } catch (e) {
+    console.error("Lỗi chất liệu", e);
+  }
+};
+
+const themDanhMuc = () => {
+  alert("Thêm danh mục");
+};
+
+onMounted(async () => {
+  await loadDanhMuc();
+  await loadThuongHieu();
+  await loadChatLieu();
+  await loadSanPham();
 });
 </script>
 
@@ -136,13 +220,37 @@ onMounted(() => {
         <label>Danh mục</label>
 
         <div class="select-add">
-          <select v-model="sanPham.danhMuc">
-            <option>Thời trang</option>
-            <option>Giày dép</option>
+          <select v-model="sanPham.idDanhMuc">
+            <option value="">Chọn danh mục</option>
+            <option v-for="dm in danhMucList" :key="dm.id" :value="dm.id">
+              {{ dm.tenDanhMuc }}
+            </option>
           </select>
 
           <button class="btn-add-mini" @click="themDanhMuc">+</button>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label>Chất liệu</label>
+
+        <select v-model="sanPham.idChatLieu">
+          <option value="">Chọn chất liệu</option>
+          <option v-for="cl in chatLieuList" :key="cl.id" :value="cl.id">
+            {{ cl.tenChatLieu }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Thương hiệu</label>
+
+        <select v-model="sanPham.idThuongHieu">
+          <option value="">Chọn thương hiệu</option>
+          <option v-for="th in thuongHieuList" :key="th.id" :value="th.id">
+            {{ th.tenThuongHieu }}
+          </option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -153,7 +261,11 @@ onMounted(() => {
       <button class="btn-save" @click="saveSanPham">Lưu sản phẩm</button>
     </div>
 
-    <h3>Biến thể sản phẩm</h3>
+    <div class="variant-header">
+      <h3>Biến thể sản phẩm</h3>
+
+      <button class="btn-save" @click="addVariant">+ Thêm biến thể</button>
+    </div>
 
     <table class="table">
       <thead>
@@ -167,8 +279,8 @@ onMounted(() => {
         </tr>
       </thead>
 
-      <tbody>
-        <tr v-for="(ct, index) in chiTietList" :key="index">
+      <tbody v-if="chiTietList.length > 0">
+        <tr v-for="(ct, index) in chiTietList" :key="ct.id">
           <td>
             <img :src="ct.hinh" class="img" />
           </td>
@@ -177,13 +289,18 @@ onMounted(() => {
 
           <td>{{ ct.size }}</td>
 
-          <td>{{ ct.gia.toLocaleString() }} đ</td>
+          <td>{{ ct.gia ? Number(ct.gia).toLocaleString() + " đ" : "-" }}</td>
 
           <td>{{ ct.soLuong }}</td>
 
           <td>
             <button class="btn-edit" @click="editVariant(index)">Sửa</button>
           </td>
+        </tr>
+      </tbody>
+      <tbody v-else>
+        <tr>
+          <td colspan="6">Chưa có biến thể sản phẩm</td>
         </tr>
       </tbody>
     </table>
@@ -491,5 +608,11 @@ h3 {
 
 .btn-back:hover {
   background: #2f57d9;
+}
+.variant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
 }
 </style>

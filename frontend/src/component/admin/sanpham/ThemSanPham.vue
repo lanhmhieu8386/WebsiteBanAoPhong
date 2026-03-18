@@ -5,9 +5,20 @@ const emit = defineEmits(["close", "save"]);
 
 const tenSanPham = ref("");
 const danhMuc = ref("");
+const thuongHieu = ref("");
+const chatLieu = ref("");
 const moTa = ref("");
 
 const bienThe = ref([{ size: "", mau: "", gia: "", soLuong: "" }]);
+
+const props = defineProps({
+  danhMucList: {
+    type: Array,
+    default: () => [],
+  },
+  thuongHieuList: Array,
+  chatLieuList: Array,
+});
 
 const themBienThe = () => {
   bienThe.value.push({
@@ -25,9 +36,10 @@ const xoaBienThe = (index) => {
 const luu = () => {
   emit("save", {
     tenSanPham: tenSanPham.value,
-    danhMuc: danhMuc.value,
+    idDanhMuc: danhMuc.value,
+    idThuongHieu: thuongHieu.value,
+    idChatLieu: chatLieu.value,
     moTa: moTa.value,
-    bienThe: bienThe.value,
   });
 };
 </script>
@@ -49,12 +61,40 @@ const luu = () => {
 
         <div class="row">
           <select v-model="danhMuc">
-            <option>Thời trang</option>
-            <option>Giày dép</option>
+            <option value="">Chọn danh mục</option>
+            <option v-for="dm in props.danhMucList" :key="dm.id" :value="dm.id">
+              {{ dm.tenDanhMuc }}
+            </option>
           </select>
 
           <button type="button" class="btn-add-small">+</button>
         </div>
+      </div>
+
+      <!-- thương hiệu -->
+      <div class="form-group">
+        <label>Thương hiệu</label>
+        <select v-model="thuongHieu">
+          <option value="">Chọn thương hiệu</option>
+          <option
+            v-for="th in props.thuongHieuList"
+            :key="th.id"
+            :value="th.id"
+          >
+            {{ th.tenThuongHieu }}
+          </option>
+        </select>
+      </div>
+
+      <!-- chất liệu -->
+      <div class="form-group">
+        <label>Chất liệu</label>
+        <select v-model="chatLieu">
+          <option value="">Chọn chất liệu</option>
+          <option v-for="cl in props.chatLieuList" :key="cl.id" :value="cl.id">
+            {{ cl.tenChatLieu }}
+          </option>
+        </select>
       </div>
 
       <!-- mô tả -->
