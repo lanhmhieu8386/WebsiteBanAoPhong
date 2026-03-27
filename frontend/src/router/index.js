@@ -18,6 +18,8 @@ import SanPhamChiTiet from "@/views/admin/SanPhamChiTiet.vue";
 // customer
 import SanPhamKhachHang from "@/component/customer/SanPham/SanPhamKhachHang.vue";
 import CustomerAccount from "@/component/customer/account/CustomerAccount.vue";
+import GioHang from "@/component/customer/giohang/GioHang.vue";
+import ThanhToan from "@/component/customer/thanhtoan/ThanhToan.vue";
 
 const routes = [
   {
@@ -37,6 +39,14 @@ const routes = [
       {
         path: "tai-khoan",
         component: CustomerAccount,
+      },
+      {
+        path: "gio-hang",
+        component: GioHang,
+      },
+      {
+        path: "thanh-toan",
+        component: ThanhToan,
       },
     ],
   },

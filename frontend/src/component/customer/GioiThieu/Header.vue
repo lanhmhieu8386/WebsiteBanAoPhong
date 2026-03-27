@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import router from "@/router";
-
+import iconGioHang from "@/assets/icons/giohang.png";
 const token = ref(null);
 const name = ref("");
 
@@ -66,12 +66,19 @@ const logout = () => {
           </div>
         </template>
 
-        <div v-else class="user-info" @click="router.push('/tai-khoan')">
-          <i class="bi bi-person-circle user-icon"></i>
-          <div class="user-name">
-            {{ name }}
+        <div v-else class="d-flex align-items-center gap-3">
+          <router-link to="/gio-hang" class="cart-wrapper">
+            <img :src="iconGioHang" alt="Giỏ hàng" class="cart-image-icon" />
+            <span class="cart-badge">0</span>
+          </router-link>
+
+          <div class="user-info" @click="router.push('/tai-khoan')">
+            <i class="bi bi-person-circle user-icon"></i>
+            <div class="user-name">
+              {{ name }}
+            </div>
+            <button class="logout-btn" @click.stop="logout">Đăng xuất</button>
           </div>
-          <button class="logout-btn" @click.stop="logout">Đăng xuất</button>
         </div>
       </div>
     </div>
@@ -79,6 +86,39 @@ const logout = () => {
 </template>
 
 <style scoped>
+.cart-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+/* Chỉnh ảnh to lên ở đây */
+.cart-image-icon {
+  width: 32px; /* Tăng lên 32px cho rõ */
+  height: 32px;
+  object-fit: contain;
+}
+
+/* Chỉnh lại vị trí số 0 cho khớp với icon to */
+.cart-badge {
+  position: absolute;
+  top: -5px; /* Nhích lên một tí */
+  right: -10px; /* Đẩy ra ngoài một tí */
+  background-color: white;
+  color: #dc3545;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 50%;
+  min-width: 18px;
+  text-align: center;
+  border: 1px solid #dc3545; /* Thêm viền nhẹ cho nổi nếu thích */
+}
+
+.cart-wrapper:hover {
+  transform: scale(1.1);
+}
 /* Giữ nguyên toàn bộ phần CSS cũ của mày bên dưới */
 .logout-btn {
   background: none;
