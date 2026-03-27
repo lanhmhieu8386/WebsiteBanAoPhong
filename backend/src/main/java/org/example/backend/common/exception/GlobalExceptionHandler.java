@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleException(Exception ex) {
 
-        ex.printStackTrace(); // in lỗi thật ra console
+        ex.printStackTrace();
 
         return ResponseEntity.status(500).body(
                 new ApiResponse(false, ex.getMessage(), null)
