@@ -1,6 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { getSanPham } from "@/api/admin/sanpham/sanPhamApi";
+import { getAllDanhMuc } from "@/api/admin/danhmuc/danhMucApi";
+import { getAllThuongHieu } from "@/api/admin/thuonghieu/ThuongHieuApi";
+import { getAllChatLieu } from "@/api/admin/chatlieu/ChatLieuApi";
+import { addSanPham } from "@/api/admin/sanpham/sanPhamApi";
 import ThemSanPham from "@/component/admin/sanpham/ThemSanPham.vue";
 
 import iconEye from "@/assets/icons/eye.png";
@@ -33,44 +38,44 @@ const currentPage = ref(1);
 
 const danhSachSanPham = ref([]);
 
-const fakeSanPham = [
-  {
-    id: 1,
-    ten: "Áo thun nam",
-    danhMuc: "Thời trang",
-    trangThai: "Đang bán",
-    hinh: "https://via.placeholder.com/40",
-    chiTiet: [
-      { size: "M", mau: "Đỏ", gia: 250000, soLuong: 20 },
-      { size: "L", mau: "Đỏ", gia: 250000, soLuong: 30 },
-    ],
-  },
-  {
-    id: 2,
-    ten: "áo nè",
-    danhMuc: "nè nè",
-    trangThai: "Đang bán",
-    hinh: "https://via.placeholder.com/40",
-    chiTiet: [
-      { size: "40", mau: "Trắng", gia: 850000, soLuong: 10 },
-      { size: "41", mau: "Đen", gia: 850000, soLuong: 20 },
-    ],
-  },
-  {
-    id: 3,
-    ten: "Áo hoodie",
-    danhMuc: "Thời trang",
-    trangThai: "Hết hàng",
-    hinh: "https://via.placeholder.com/40",
-    chiTiet: [],
-  },
-];
+const danhMucList = ref([]);
+const thuongHieuList = ref([]);
+const chatLieuList = ref([]);
 
-const loadSanPham = () => {
-  danhSachSanPham.value = fakeSanPham;
+const loadSanPham = async () => {
+  try {
+    const res = await getSanPham();
+
+    const data = res.data?.data || res.data || [];
+
+    danhSachSanPham.value = data; // 👈 chỉ cần dòng này
+  } catch (error) {
+    console.error("Lỗi load sản phẩm:", error);
+  }
 };
 
-const totalItems = computed(() => danhSachSanPham.value.length);
+const danhSachLoc = computed(() => {
+  return danhSachSanPham.value.filter((sp) => {
+    const ten = sp.tenSanPham || "";
+
+    const matchSearch = ten.toLowerCase().includes(search.value.toLowerCase());
+
+    const selectedDanhMuc = danhMucList.value.find(
+      (dm) => String(dm.id) === String(danhMuc.value),
+    );
+
+    const matchDanhMuc =
+      !danhMuc.value ||
+      sp.tenDanhMuc?.trim() === selectedDanhMuc?.tenDanhMuc?.trim();
+
+    const matchTrangThai =
+      trangThai.value === "" || sp.trangThai === JSON.parse(trangThai.value);
+
+    return matchSearch && matchDanhMuc && matchTrangThai;
+  });
+});
+
+const totalItems = computed(() => danhSachLoc.value.length);
 
 const totalPages = computed(
   () => Math.ceil(totalItems.value / pageSize.value) || 1,
@@ -78,41 +83,89 @@ const totalPages = computed(
 
 const danhSachHienThi = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
-  return danhSachSanPham.value.slice(start, start + pageSize.value);
+  return danhSachLoc.value.slice(start, start + pageSize.value);
 });
 
 const xemChiTiet = (sp) => {
-  router.push(`/admin/san-pham/${sp.id}`);
+  router.push({
+    name: "SanPhamChiTiet",
+    params: { id: sp.id },
+  });
 };
 
-const mauList = (sp) => {
-  if (!sp.chiTiet) return [];
-
-  const mau = sp.chiTiet.map((ct) => ct.mau);
-
-  return [...new Set(mau)];
+const goFirst = () => {
+  currentPage.value = 1;
 };
 
-const sizeList = (sp) => {
-  if (!sp.chiTiet) return [];
-
-  const size = sp.chiTiet.map((ct) => ct.size);
-
-  return [...new Set(size)];
+const goLast = () => {
+  currentPage.value = totalPages.value;
 };
 
-const giaMin = (sp) => {
-  if (!sp.chiTiet || sp.chiTiet.length === 0) return 0;
-  return Math.min(...sp.chiTiet.map((ct) => ct.gia));
+const goNext = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
 };
 
-const tongSoLuong = (sp) => {
-  if (!sp.chiTiet) return 0;
-  return sp.chiTiet.reduce((sum, ct) => sum + ct.soLuong, 0);
+watch(pageSize, () => {
+  currentPage.value = 1;
+});
+
+watch([search, danhMuc, trangThai], () => {
+  currentPage.value = 1;
+});
+
+const goPrev = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const loadDanhMuc = async () => {
+  try {
+    const res = await getAllDanhMuc();
+    danhMucList.value = res.data || [];
+  } catch (error) {
+    console.error("Lỗi load danh mục:", error);
+  }
+};
+const loadThuongHieu = async () => {
+  try {
+    const res = await getAllThuongHieu();
+    thuongHieuList.value = res.data || [];
+  } catch (error) {
+    console.error("Lỗi load thương hiệu:", error);
+  }
+};
+
+const loadChatLieu = async () => {
+  try {
+    const res = await getAllChatLieu();
+    chatLieuList.value = res.data || [];
+  } catch (error) {
+    console.error("Lỗi load chất liệu:", error);
+  }
+};
+
+const handleAdd = async (data) => {
+  try {
+    await addSanPham(data);
+
+    alert("Thêm thành công");
+
+    loadSanPham(); // reload table
+    showModal.value = false;
+  } catch (error) {
+    console.error(error);
+    alert("Thêm thất bại");
+  }
 };
 
 onMounted(() => {
   loadSanPham();
+  loadDanhMuc();
+  loadThuongHieu();
+  loadChatLieu();
 });
 </script>
 
@@ -137,8 +190,10 @@ onMounted(() => {
         <label>Danh mục</label>
         <select v-model="danhMuc">
           <option value="">Tất cả</option>
-          <option>Thời trang</option>
-          <option>Giày dép</option>
+
+          <option v-for="dm in danhMucList" :key="dm.id" :value="dm.id">
+            {{ dm.tenDanhMuc }}
+          </option>
         </select>
       </div>
 
@@ -146,8 +201,8 @@ onMounted(() => {
         <label>Trạng thái</label>
         <select v-model="trangThai">
           <option value="">Tất cả</option>
-          <option>Đang bán</option>
-          <option>Hết hàng</option>
+          <option :value="true">Đang bán</option>
+          <option :value="false">Ngừng bán</option>
         </select>
       </div>
 
@@ -181,13 +236,12 @@ onMounted(() => {
         <thead>
           <tr>
             <th>STT</th>
-            <th>Ảnh</th>
             <th>Tên sản phẩm</th>
             <th>Danh mục</th>
-            <th>Màu</th>
-            <th>Size</th>
-            <th>Giá</th>
-            <th>Số lượng</th>
+            <th>Thương hiệu</th>
+            <th>Chất liệu</th>
+            <th>Ngày tạo</th>
+            <th>Mô tả</th>
             <th>Trạng thái</th>
             <th>Thao tác</th>
           </tr>
@@ -195,53 +249,30 @@ onMounted(() => {
 
         <tbody>
           <tr v-for="(sp, index) in danhSachHienThi" :key="sp.id">
-            <td>{{ index + 1 }}</td>
-
             <td>
-              <img :src="sp.hinh" class="img-product" />
+              {{ (currentPage - 1) * pageSize + index + 1 }}
             </td>
 
-            <td class="text-bold">{{ sp.ten }}</td>
+            <td class="text-bold">{{ sp.tenSanPham }}</td>
 
-            <td>{{ sp.danhMuc }}</td>
-            <td>
-              <span v-if="mauList(sp).length">
-                <span v-for="(mau, index) in mauList(sp)" :key="index">
-                  {{ mau }}
-                  <span v-if="index < mauList(sp).length - 1">, </span>
-                </span>
-              </span>
+            <td>{{ sp.tenDanhMuc }}</td>
 
-              <span v-else>-</span>
-            </td>
+            <td>{{ sp.thuongHieu }}</td>
+
+            <td>{{ sp.chatLieu }}</td>
 
             <td>
-              <span v-if="sizeList(sp).length">
-                <span v-for="(size, index) in sizeList(sp)" :key="index">
-                  {{ size }}
-                  <span v-if="index < sizeList(sp).length - 1">, </span>
-                </span>
-              </span>
-
-              <span v-else>-</span>
+              {{ sp.ngayTao ? new Date(sp.ngayTao).toLocaleDateString() : "-" }}
             </td>
 
-            <td>
-              {{ giaMin(sp) ? giaMin(sp).toLocaleString() + " đ" : "-" }}
-            </td>
-
-            <td>
-              {{ tongSoLuong(sp) }}
-            </td>
+            <td>{{ sp.moTa || "-" }}</td>
 
             <td>
               <span
                 class="status-badge"
-                :class="
-                  sp.trangThai == 'Đang bán' ? 'status-active' : 'status-cancel'
-                "
+                :class="sp.trangThai ? 'status-active' : 'status-cancel'"
               >
-                {{ sp.trangThai }}
+                {{ sp.trangThai ? "Đang bán" : "Ngừng bán" }}
               </span>
             </td>
 
@@ -309,7 +340,14 @@ onMounted(() => {
       </div>
     </div>
   </div>
-  <ThemSanPham v-if="showModal" @close="dongForm" />
+  <ThemSanPham
+    v-if="showModal"
+    :danhMucList="danhMucList"
+    :thuongHieuList="thuongHieuList"
+    :chatLieuList="chatLieuList"
+    @close="dongForm"
+    @save="handleAdd"
+  />
 </template>
 
 <style scoped>

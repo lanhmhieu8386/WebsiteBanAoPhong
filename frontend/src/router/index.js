@@ -53,18 +53,19 @@ const routes = [
     component: DangKy,
   },
 
-  { path: "/admin/tong-quan", name: "tongQuan", component: Testloginthanhcong },
-
   //admin
   {
     path: "/admin",
     component: AdminLayout,
     children: [
-      { path: "tong-quan", component: TongQuan },
-      { path: "hoa-don", component: HoaDon },
-      { path: "san-pham", component: SanPham },
       {
-        path: "san-pham/:id",
+        path: "tong-quan",
+        redirect: "/admin/hoa-don",
+      },
+      { path: "hoa-don", name: "hoaDon", component: HoaDon },
+      { path: "san-pham", name: "sanPham", component: SanPham },
+      {
+        path: "san-pham/chi-tiet/:id",
         name: "SanPhamChiTiet",
         component: SanPhamChiTiet,
       },

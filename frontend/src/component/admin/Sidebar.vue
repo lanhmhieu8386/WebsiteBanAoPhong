@@ -2,6 +2,7 @@ sửa cái này
 <script setup>
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import logo from "@/assets/logo/logo.png";
 
 /* ===== PHÂN QUYỀN ===== */
 const role = Number(localStorage.getItem("role"));
@@ -14,12 +15,13 @@ defineProps({
 import hoaDon from "@/assets/icons/datban.png";
 import sanPham from "@/assets/icons/datban.png";
 import danhMuc from "@/assets/icons/danhmuc.png";
+import nhanVien from "@/assets/icons/taiKhoan.png";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 
 const logout = () => {
-  router.push("/login");
+  router.push("/dang-nhap");
 };
 
 const route = useRoute();
@@ -40,6 +42,11 @@ const menus = [
     name: "Danh mục",
     path: "/admin/danh-muc",
     icon: danhMuc,
+  },
+  {
+    name: "Quản lý nhân viên",
+    path: "/admin/nhan-vien",
+    icon: nhanVien,
   },
 ];
 
@@ -94,9 +101,9 @@ const isParentActive = (item) => {
 <template>
   <div class="sidebar d-flex flex-column">
     <!-- LOGO -->
-    <div class="logo-container d-flex align-items-center gap-2 px-3 py-3">
-      <img src="#" width="32" height="32" />
-      <span v-if="!collapsed" class="brand-name">Four Spice</span>
+    <div class="logo-container text-center align-items-center gap-2 px-3 py-3">
+      <img :src="logo" width="100" />
+      <span v-if="!collapsed" class="brand-name"></span>
     </div>
     <!-- MENU -->
     <ul class="nav flex-column px-3 py-4 gap-1">
