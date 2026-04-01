@@ -1,25 +1,24 @@
 package org.example.backend.customer.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "kich_co")
+@Table(name = "mau_sac")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class KichCo {
+public class MauSacCustomer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_kich_co", length = 20)
-    private String maKichCo;
+    @Column(name = "ma_mau_sac", length = 20)
+    private String maMauSac;
 
-    @Column(name = "ten_kich_co", length = 20)
-    private String tenKichCo;
+    @Column(name = "ten_mau_sac", length = 50)
+    private String tenMauSac;
 }

@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SanPham {
+public class SanPhamCustomer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,19 +47,19 @@ public class SanPham {
 
     @ManyToOne
     @JoinColumn(name = "id_danh_muc")
-    private DanhMuc danhMuc;
+    private DanhMucCustomer danhMuc;
 
     @ManyToOne
     @JoinColumn(name = "id_thuong_hieu")
-    private ThuongHieu thuongHieu;
+    private ThuongHieuCustomer thuongHieu;
 
     @ManyToOne
     @JoinColumn(name = "id_chat_lieu")
-    private ChatLieu chatLieu;
+    private ChatLieuCustomer chatLieu;
 
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
     @OneToMany(mappedBy = "sanPham", fetch = FetchType.LAZY)
-    private List<SanPhamChiTiet> sanPhamChiTietList;
+    private List<SanPhamChiTietCustomer> sanPhamChiTietList;
 }

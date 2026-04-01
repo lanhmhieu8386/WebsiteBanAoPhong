@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class HinhAnhSanPham {
+public class HinhAnhSanPhamCustomer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +19,7 @@ public class HinhAnhSanPham {
     // ===== Quan hệ =====
     @ManyToOne
     @JoinColumn(name = "id_san_pham_chi_tiet")
-    private SanPhamChiTiet sanPhamChiTiet;
+    private SanPhamChiTietCustomer sanPhamChiTiet;
 
     // ===== Thuộc tính =====
     @Column(name = "url_anh", length = 255)

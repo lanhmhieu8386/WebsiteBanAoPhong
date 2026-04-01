@@ -1,10 +1,10 @@
 package org.example.backend.customer.service;
 
-import org.example.backend.customer.entity.DanhMuc;
+import org.example.backend.customer.entity.DanhMucCustomer;
 
 import java.util.List;
 
 public interface DanhMucService {
 
-    List<DanhMuc> findAllDanhMuc();
+    List<DanhMucCustomer> findAllDanhMuc();
 }

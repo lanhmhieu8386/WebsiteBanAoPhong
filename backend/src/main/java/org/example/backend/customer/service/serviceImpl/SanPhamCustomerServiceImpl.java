@@ -2,8 +2,8 @@ package org.example.backend.customer.service.serviceImpl;
 
 import org.example.backend.customer.dto.response.SanPhamChiTietResponse;
 import org.example.backend.customer.dto.response.SanPhamResponse;
-import org.example.backend.customer.entity.SanPham;
-import org.example.backend.customer.repository.SanPhamRepository;
+import org.example.backend.customer.entity.SanPhamCustomer;
+import org.example.backend.customer.repository.SanPhamCustomerRepository;
 import org.example.backend.customer.service.SanPhamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,10 +12,10 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
-public class SanPhamServiceImpl implements SanPhamService {
+public class SanPhamCustomerServiceImpl implements SanPhamService {
 
     @Autowired
-    private SanPhamRepository sanPhamRepository;
+    private SanPhamCustomerRepository sanPhamRepository;
 
     @Override
     public List<SanPhamResponse> findAll() {
@@ -98,13 +98,13 @@ public class SanPhamServiceImpl implements SanPhamService {
 
     @Override
     public SanPhamResponse findById(Long id) {
-        SanPham sp = sanPhamRepository.findByIdWithChiTiet(id)
+        SanPhamCustomer sp = sanPhamRepository.findByIdWithChiTiet(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy"));
 
         return mapToResponse(sp);
     }
 
-    private SanPhamResponse mapToResponse(SanPham sp) {
+    private SanPhamResponse mapToResponse(SanPhamCustomer sp) {
 
         // map chi tiết
         List<SanPhamChiTietResponse> chiTietList = sp.getSanPhamChiTietList()

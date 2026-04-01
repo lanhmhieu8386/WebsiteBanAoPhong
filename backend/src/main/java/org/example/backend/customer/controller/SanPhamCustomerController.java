@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/customer/san-pham")
-public class SanPhamController {
+public class SanPhamCustomerController {
 
     @Autowired
     private SanPhamService sanPhamService;

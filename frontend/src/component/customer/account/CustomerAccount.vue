@@ -1,15 +1,51 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { getThongTin, updateThongTin } from "@/api/customer/thongTinApi";
 
-// khai báo biến reactive để tránh lỗi "not defined on instance"
-const name = ref("nguyễn văn a");
 const activeTab = ref("info");
 
-onMounted(() => {
-  // đồng bộ tên từ localstorage nếu có
-  const savedName = localStorage.getItem("name");
-  if (savedName) {
-    name.value = savedName;
+const customer = ref({
+  tenKhachHang: "",
+  soDienThoai: "",
+  email: "",
+  ngaySinh: "",
+});
+const saveInfo = async () => {
+  const ok = confirm("Bạn có chắc muốn cập nhật thông tin không?");
+  if (!ok) return;
+
+  try {
+    const email = localStorage.getItem("email");
+
+    if (!customer.value.tenKhachHang) {
+      alert("Tên không được để trống!");
+      return;
+    }
+
+    const payload = {
+      ...customer.value,
+      ngaySinh: customer.value.ngaySinh,
+    };
+
+    const res = await updateThongTin(payload, email);
+
+    customer.value = res.data;
+
+    alert("Cập nhật thành công!");
+  } catch (e) {
+    console.error(e);
+    alert("Cập nhật thất bại!");
+  }
+};
+
+onMounted(async () => {
+  try {
+    const res = await getThongTin();
+    console.log("DATA:", res.data);
+
+    customer.value = res.data;
+  } catch (e) {
+    console.error("Lỗi load thông tin", e);
   }
 });
 
@@ -35,7 +71,9 @@ const openPasswordModal = () => {
                 <i class="bi bi-camera"></i>
               </button>
             </div>
-            <h3 class="user-name-display">{{ name }}</h3>
+            <h3 class="user-name-display">
+              {{ customer.tenKhachHang }}
+            </h3>
             <span class="badge-gold-gradient">Thành viên Gold</span>
           </div>
 
@@ -72,61 +110,40 @@ const openPasswordModal = () => {
                   <label class="label-bold">Họ và tên</label>
                   <input
                     type="text"
-                    v-model="name"
+                    v-model="customer.tenKhachHang"
                     class="modern-input"
-                    placeholder="nhập họ tên..."
                   />
                 </div>
 
                 <div class="input-card shadow-soft">
-                  <label class="label-bold">Giới tính</label>
-                  <div class="gender-selection">
-                    <label class="gender-option">
-                      <input type="radio" name="gender" value="male" checked />
-                      <span class="gender-label">Nam</span>
-                    </label>
-                    <label class="gender-option">
-                      <input type="radio" name="gender" value="female" />
-                      <span class="gender-label">Nữ</span>
-                    </label>
-                    <label class="gender-option">
-                      <input type="radio" name="gender" value="other" />
-                      <span class="gender-label">Khác</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div class="input-card shadow-soft">
                   <label class="label-bold">Số điện thoại</label>
-                  <input type="tel" value="033 265 4198" class="modern-input" />
+                  <input
+                    type="tel"
+                    v-model="customer.soDienThoai"
+                    class="modern-input"
+                  />
                 </div>
 
                 <div class="input-card shadow-soft">
-                  <label class="label-bold">Email</label>
                   <input
                     type="email"
-                    value="khachhang@foursquare.com"
+                    v-model="customer.email"
                     class="modern-input"
                   />
                 </div>
 
                 <div class="input-card shadow-soft">
                   <label class="label-bold">Ngày sinh</label>
-                  <input type="date" value="1995-10-20" class="modern-input" />
-                </div>
-
-                <div class="input-card full-width shadow-soft">
-                  <label class="label-bold">Địa chỉ</label>
                   <input
-                    type="text"
-                    value="123 đường láng, đống đa, hà nội"
+                    type="date"
+                    :value="customer.ngaySinh?.substring(0, 10)"
                     class="modern-input"
                   />
                 </div>
               </div>
 
               <div class="action-footer">
-                <span class="save-action">
+                <span class="save-action" @click="saveInfo">
                   <i class="bi bi-check2-circle"></i>
                   Lưu thay đổi
                 </span>

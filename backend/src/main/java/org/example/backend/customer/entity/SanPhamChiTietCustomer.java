@@ -14,7 +14,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SanPhamChiTiet {
+public class SanPhamChiTietCustomer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,15 +27,15 @@ public class SanPhamChiTiet {
 
     @ManyToOne
     @JoinColumn(name = "id_san_pham")
-    private SanPham sanPham;
+    private SanPhamCustomer sanPham;
 
     @ManyToOne
     @JoinColumn(name = "id_mau_sac")
-    private MauSac mauSac;
+    private MauSacCustomer mauSac;
 
     @ManyToOne
     @JoinColumn(name = "id_kich_co")
-    private KichCo kichCo;
+    private KichCoCustomer kichCo;
 
     // ===== Thuộc tính =====
 

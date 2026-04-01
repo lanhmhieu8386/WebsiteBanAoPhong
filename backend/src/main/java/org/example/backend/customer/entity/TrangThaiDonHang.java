@@ -4,21 +4,21 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "mau_sac")
+@Table(name = "trang_thai_don_hang")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MauSac {
+public class TrangThaiDonHang {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_mau_sac", length = 20)
-    private String maMauSac;
+    @Column(name = "ma_trang_thai")
+    private String maTrangThai;
 
-    @Column(name = "ten_mau_sac", length = 50)
-    private String tenMauSac;
+    @Column(name = "ten_trang_thai")
+    private String tenTrangThai;
 }

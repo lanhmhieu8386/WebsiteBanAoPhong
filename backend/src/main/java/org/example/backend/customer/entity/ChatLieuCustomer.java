@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatLieu {
+public class ChatLieuCustomer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

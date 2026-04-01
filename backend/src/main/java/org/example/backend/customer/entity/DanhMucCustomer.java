@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class DanhMuc {
+public class DanhMucCustomer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
