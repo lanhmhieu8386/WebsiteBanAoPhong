@@ -14,6 +14,8 @@ import HoaDon from "@/views/admin/HoaDon.vue";
 import SanPham from "@/views/admin/SanPham.vue";
 import DanhMuc from "@/views/admin/DanhMuc.vue";
 import SanPhamChiTiet from "@/views/admin/SanPhamChiTiet.vue";
+import nhanVien from "@/views/admin/nhanVien.vue";
+import khachHang from "@/views/admin/khachHang.vue";
 
 const routes = [
   {
@@ -57,6 +59,8 @@ const routes = [
         component: SanPhamChiTiet,
       },
       { path: "danh-muc", component: DanhMuc },
+      { path: "nhan-vien", component: nhanVien },
+      { path: "khach-hang", component: khachHang },
     ],
   },
 ];

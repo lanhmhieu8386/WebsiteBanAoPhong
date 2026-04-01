@@ -2,6 +2,7 @@ package org.example.backend.common.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class NhanVien {
 
     @Id
@@ -58,4 +60,5 @@ public class NhanVien {
 
     @Column(name = "trang_thai")
     private Boolean trangThai;
+
 }

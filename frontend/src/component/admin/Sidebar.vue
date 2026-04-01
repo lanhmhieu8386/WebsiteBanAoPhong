@@ -16,6 +16,7 @@ import hoaDon from "@/assets/icons/datban.png";
 import sanPham from "@/assets/icons/datban.png";
 import danhMuc from "@/assets/icons/danhmuc.png";
 import nhanVien from "@/assets/icons/taiKhoan.png";
+import khachHang from "@/assets/icons/taiKhoan.png";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -47,6 +48,11 @@ const menus = [
     name: "Quản lý nhân viên",
     path: "/admin/nhan-vien",
     icon: nhanVien,
+  },
+  {
+    name: "Quản lý KhachHang",
+    path: "/admin/khach-hang",
+    icon: khachHang,
   },
 ];
 
