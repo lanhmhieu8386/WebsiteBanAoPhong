@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Builder
 public class SanPhamChiTietResponse {
 
-    private Integer id;
+    private Long id;
     private String maSanPhamChiTiet;
 
     private String tenMauSac;

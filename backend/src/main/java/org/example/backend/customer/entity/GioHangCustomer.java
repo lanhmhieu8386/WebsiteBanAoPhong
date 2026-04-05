@@ -2,7 +2,6 @@ package org.example.backend.customer.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.backend.common.entity.TaiKhoan;
 
 import java.util.Date;
 import java.util.List;
@@ -18,14 +17,14 @@ public class GioHangCustomer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "ma_gio_hang")
     private String maGioHang;
 
     @ManyToOne
     @JoinColumn(name = "id_tai_khoan")
-    private TaiKhoan taiKhoan;
+    private TaiKhoanCustomer taiKhoanCustomer;
 
     @Column(name = "ngay_tao")
     private Date ngayTao;
