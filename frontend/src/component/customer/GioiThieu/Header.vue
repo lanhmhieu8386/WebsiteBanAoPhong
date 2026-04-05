@@ -10,6 +10,20 @@ onMounted(() => {
   name.value = localStorage.getItem("name");
 });
 
+const cartCount = ref(0);
+
+onMounted(() => {
+  token.value = localStorage.getItem("token");
+  name.value = localStorage.getItem("name");
+
+  const updateCart = () => {
+    cartCount.value = Number(localStorage.getItem("cartCount")) || 0;
+  };
+
+  updateCart();
+
+  window.addEventListener("update-cart", updateCart);
+});
 const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("name");
@@ -69,7 +83,7 @@ const logout = () => {
         <div v-else class="d-flex align-items-center gap-3">
           <router-link to="/gio-hang" class="cart-wrapper">
             <img :src="iconGioHang" alt="Giỏ hàng" class="cart-image-icon" />
-            <span class="cart-badge">0</span>
+            <span class="cart-badge">{{ cartCount }}</span>
           </router-link>
 
           <div class="user-info" @click="router.push('/tai-khoan')">

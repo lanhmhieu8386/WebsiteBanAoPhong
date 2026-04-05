@@ -13,6 +13,27 @@ import aoPhong4 from "@/assets/images/aophong4.jpg";
 import aoPhong5 from "@/assets/images/aophong5.jpg";
 import aoPhong6 from "@/assets/images/aophong6.jpg";
 
+/////////////////API //////////////
+import { addGioHang } from "@/api/customer/gioHangApi";
+
+///////////////// GIO HANG /////////////////
+const handleAddToCart = async (item) => {
+  try {
+    await addGioHang({
+      idSanPhamChiTiet: item.id,
+      soLuong: 1,
+    });
+
+    let count = Number(localStorage.getItem("cartCount")) || 0;
+    count += 1;
+    localStorage.setItem("cartCount", count);
+    window.dispatchEvent(new Event("update-cart"));
+    alert("✅ Đã thêm vào giỏ");
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 const localImages = [
   aoPhong1,
   aoPhong2,
@@ -162,7 +183,12 @@ onMounted(() => {
                   {{ item.giaMin.toLocaleString() }}đ
                 </p>
 
-                <button class="btn btn-sm btn-add rounded-3">MUA NGAY</button>
+                <button
+                  class="btn btn-sm btn-add rounded-3"
+                  @click="handleAddToCart(item)"
+                >
+                  MUA NGAY
+                </button>
                 <button
                   class="btn btn-sm btn-outline-secondary rounded-3 mt-2"
                   @click="goChiTiet(item.id)"
