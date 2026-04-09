@@ -77,6 +77,7 @@ const isSelectAll = computed({
     cartByShop.value.forEach((s) => s.items.forEach((i) => (i.selected = val)));
   },
 });
+//////////////// DONE T34 /////////////
 </script>
 
 <template>
