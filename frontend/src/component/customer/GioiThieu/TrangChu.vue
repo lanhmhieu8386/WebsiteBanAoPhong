@@ -1,8 +1,7 @@
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, ref, computed } from "vue";
 import khuyenmai1 from "@/assets/images/khuyenmai1.png";
 import khuyenmai2 from "@/assets/images/khuyenmai2.jpg";
-
 import aoPhong1 from "@/assets/images/aophong1.jpg";
 import aoPhong2 from "@/assets/images/aophong2.jpg";
 import aoPhong3 from "@/assets/images/aophong3.jpg";
@@ -12,11 +11,25 @@ import aoPhong6 from "@/assets/images/aophong6.jpg";
 
 const promoImages = [khuyenmai1, khuyenmai2];
 import { useRouter } from "vue-router";
-
+import { getAllDanhMuc } from "@/api/danhmuc/danhMucApi";
+import { getAllSanPham } from "@/api/sanpham/sanPhamApi";
+import { getSanPhamByDanhMuc } from "@/api/sanpham/sanPhamApi";
+import { detailSanPham } from "@/api/sanpham/sanPhamApi";
 const router = useRouter();
+const danhMucList = ref([]);
+const selectedDanhMuc = ref(null);
+const sanPhamList = ref([]);
+const currentPage = ref(1);
+const pageSize = 6;
+const selectedProduct = ref(null);
+const showModal = ref(false);
 
 const goSanpham = () => {
   router.push("/san-pham");
+};
+const selectDanhMuc = (id) => {
+  selectedDanhMuc.value = id;
+  loadSanPhamByDanhMuc(id);
 };
 
 const scrollBooking = () => {
@@ -36,46 +49,43 @@ const features = [
   { icon: '<i class="bi bi-truck"></i>', text: "Giao hàng nhanh" },
 ];
 
-const menuItems = [
-  {
-    id: 1,
-    name: "ÁO PHÔNG OVERSIZE BASIC",
-    price: "235.000",
-    image: aoPhong1,
-  },
-  {
-    id: 2,
-    name: "POLO PREMIUM COTTON",
-    price: "169.000",
-    image: aoPhong2,
-  },
-  {
-    id: 3,
-    name: "TEE GRAPHIC STREETWEAR",
-    price: "189.000",
-    image: aoPhong3,
-  },
-  {
-    id: 4,
-    name: "ÁO PHÔNG UNISEX LOOSE",
-    price: "129.000",
-    image: aoPhong4,
-  },
-  {
-    id: 5,
-    name: "TANKTOP THỂ THAO",
-    price: "159.000",
-    image: aoPhong5,
-  },
-  {
-    id: 6,
-    name: "HOODIE CHILL SUMMER",
-    price: "99.000",
-    image: aoPhong6,
-  },
-];
+const goChiTiet = async (id) => {
+  try {
+    const res = await detailSanPham(id);
+    selectedProduct.value = res.data;
+    showModal.value = true;
+  } catch (err) {
+    console.error("Lỗi load chi tiết", err);
+  }
+};
 
-onMounted(() => {
+const loadSanPham = async () => {
+  try {
+    const res = await getAllSanPham();
+    sanPhamList.value = res.data;
+  } catch (err) {
+    console.error("Lỗi lấy sản phẩm", err);
+  }
+};
+
+const loadSanPhamByDanhMuc = async (id) => {
+  try {
+    const res = await getSanPhamByDanhMuc(id);
+    sanPhamList.value = res.data;
+    currentPage.value = 1; // reset về trang 1
+  } catch (err) {
+    console.error("Lỗi lọc sản phẩm", err);
+  }
+};
+const loadDanhMuc = async () => {
+  try {
+    const res = await getAllDanhMuc();
+    danhMucList.value = res.data;
+  } catch (err) {
+    console.error("Lỗi lấy danh mục", err);
+  }
+};
+const initAnimation = () => {
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -84,11 +94,26 @@ onMounted(() => {
     },
     { threshold: 0.15 },
   );
+
   document
     .querySelectorAll(
       ".reveal, .reveal-left, .reveal-right, .reveal-up, .reveal-down",
     )
     .forEach((el) => observer.observe(el));
+};
+onMounted(() => {
+  loadDanhMuc();
+  loadSanPham();
+  initAnimation();
+});
+
+const paginatedSanPham = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return sanPhamList.value.slice(start, start + pageSize);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(sanPhamList.value.length / pageSize);
 });
 </script>
 
@@ -167,38 +192,83 @@ onMounted(() => {
       >
         <h2 class="section-title mb-0">DANH MỤC SẢN PHẨM</h2>
         <div class="menu-categories d-flex gap-3 overflow-auto mt-3 mt-md-0">
-          <span class="category-item active">ÁO PHÔNG</span>
-          <span class="category-item">POLO</span>
-          <span class="category-item">SƠ MI</span>
-          <span class="category-item">QUẦN JEAN</span>
-          <span class="category-item">PHỤ KIỆN</span>
-          <span class="category-item">BỘ SƯU TẬP</span>
+          <span
+            class="category-item"
+            v-for="item in danhMucList"
+            :key="item.id"
+            :class="{ active: selectedDanhMuc === item.id }"
+            @click="selectDanhMuc(item.id)"
+          >
+            {{ item.tenDanhMuc }}
+          </span>
         </div>
       </div>
 
       <div class="row g-4">
-        <div class="col-6 col-lg-4" v-for="item in menuItems" :key="item.id">
+        <div
+          class="col-6 col-lg-4"
+          v-for="item in paginatedSanPham"
+          :key="item.id"
+        >
           <div class="product-card p-3 shadow-sm border rounded-4">
             <div class="product-img-box">
               <img
-                :src="item.image"
+                :src="item.image || aoPhong1"
                 class="product-img hover-zoom"
-                :alt="item.name"
+                :alt="item.tenSanPham"
               />
             </div>
-            <h5 class="product-title text-uppercase">{{ item.name }}</h5>
-            <p class="product-price text-danger fw-bold">{{ item.price }}đ</p>
+
+            <h5 class="product-title text-uppercase">
+              {{ item.tenSanPham }}
+            </h5>
+
+            <p class="product-price text-danger fw-bold">{{ item.giaMin }}đ</p>
+
+            <!-- 👇 GIỮ NGUYÊN 2 NÚT -->
             <div class="d-flex gap-2">
               <button
                 class="btn btn-outline-warning btn-sm flex-grow-1 fw-bold btn-add"
+                @click="muaNgay(item)"
               >
                 MUA NGAY
               </button>
-              <button class="btn btn-light btn-sm text-muted btn-detail">
+
+              <button
+                class="btn btn-light btn-sm text-muted btn-detail"
+                @click="goChiTiet(item.id)"
+              >
                 Chi tiết
               </button>
             </div>
           </div>
+        </div>
+        <div class="d-flex justify-content-center mt-4 gap-2">
+          <button
+            class="btn btn-sm btn-outline-danger"
+            :disabled="currentPage === 1"
+            @click="currentPage--"
+          >
+            ←
+          </button>
+
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="btn btn-sm"
+            :class="page === currentPage ? 'btn-danger' : 'btn-outline-danger'"
+            @click="currentPage = page"
+          >
+            {{ page }}
+          </button>
+
+          <button
+            class="btn btn-sm btn-outline-danger"
+            :disabled="currentPage === totalPages"
+            @click="currentPage++"
+          >
+            →
+          </button>
         </div>
       </div>
     </section>
@@ -282,9 +352,178 @@ onMounted(() => {
       </div>
     </section>
   </main>
+  <!-- MODAL -->
+  <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+    <div class="modal-box modern">
+      <button class="btn-close" @click="showModal = false">×</button>
+
+      <div v-if="selectedProduct" class="modal-content-grid">
+        <!-- 👇 LEFT: IMAGE -->
+        <div class="modal-left">
+          <img :src="selectedProduct.image || aoPhong1" class="modal-img" />
+        </div>
+
+        <!-- 👇 RIGHT: INFO -->
+        <div class="modal-right">
+          <h3 class="fw-bold text-danger">
+            {{ selectedProduct.tenSanPham }}
+          </h3>
+
+          <p class="text-muted small">
+            {{ selectedProduct.moTa }}
+          </p>
+
+          <div class="meta">
+            <span>Danh mục: {{ selectedProduct.tenDanhMuc }}</span>
+            <span>Thương hiệu: {{ selectedProduct.tenThuongHieu }}</span>
+            <span>Chất liệu: {{ selectedProduct.tenChatLieu }}</span>
+          </div>
+
+          <h4 class="price mt-3">{{ selectedProduct.giaMin }}đ</h4>
+
+          <!-- 👇 BIẾN THỂ -->
+          <div class="variant-list">
+            <h6 class="fw-bold mb-2">Chọn biến thể</h6>
+
+            <div
+              v-for="ct in selectedProduct.chiTietList"
+              :key="ct.id"
+              class="variant-card"
+            >
+              <div>{{ ct.tenMauSac }} - {{ ct.tenKichCo }}</div>
+
+              <div class="text-danger fw-bold">{{ ct.gia }}đ</div>
+
+              <small class="text-muted"> Còn {{ ct.soLuongTon }} </small>
+            </div>
+          </div>
+
+          <!-- 👇 BUTTON -->
+          <button class="btn btn-danger w-100 mt-3 fw-bold">MUA NGAY</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.modal-box.modern {
+  width: 900px;
+  max-width: 95%;
+  border-radius: 20px;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* GRID */
+.modal-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* LEFT */
+.modal-left {
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* RIGHT */
+.modal-right {
+  padding: 24px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.price {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #dc3545;
+}
+
+/* VARIANT */
+.variant-list {
+  margin-top: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.variant-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: 0.25s;
+}
+
+.variant-card:hover {
+  background: #fff5f5;
+  border-color: #dc3545;
+  transform: scale(1.02);
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .modal-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-box.modern {
+    width: 95%;
+  }
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-box {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.btn-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  border: none;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.variant-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
 /* Giữ nguyên toàn bộ CSS cũ của mày vì nó đang rất đẹp */
 /* Chỉ thay đổi màu sắc nếu mày muốn chuyển từ đỏ lẩu sang màu khác, nếu không thì cứ để đỏ vẫn rất nổi bật */
 /* Tao đã giữ nguyên toàn bộ các class CSS từ đoạn code trước */

@@ -13,31 +13,32 @@ import java.util.Optional;
 
 @Repository
 public interface KhachHangRepository extends JpaRepository<KhachHang, Long> {
+
     @Query("""
-        select new org.example.backend.common.dto.response.KhachHangResponse(
-            kh.id,
-            kh.maKhachHang,
-            tk.id,
-            tk.tenTaiKhoan,
-            kh.tenKhachHang,
-            kh.ngaySinh,
-            kh.soDienThoai,
-            kh.email,
-            kh.trangThai,
-            vt.maVaiTro,
-            vt.tenVaiTro
-        )
-        from KhachHang kh
-        left join kh.taiKhoan tk
-        left join tk.vaiTro vt
-        where (:keyword is null
-            or lower(kh.maKhachHang) like lower(concat('%', :keyword, '%'))
-            or lower(kh.tenKhachHang) like lower(concat('%', :keyword, '%'))
-            or lower(kh.soDienThoai) like lower(concat('%', :keyword, '%'))
-            or lower(kh.email) like lower(concat('%', :keyword, '%'))
-            or lower(tk.tenTaiKhoan) like lower(concat('%', :keyword, '%')))
-        and (:trangThai is null or kh.trangThai = :trangThai)
-    """)
+                select new org.example.backend.common.dto.response.KhachHangResponse(
+                    kh.id,
+                    kh.maKhachHang,
+                    tk.id,
+                    tk.tenTaiKhoan,
+                    kh.tenKhachHang,
+                    kh.ngaySinh,
+                    kh.soDienThoai,
+                    kh.email,
+                    kh.trangThai,
+                    vt.maVaiTro,
+                    vt.tenVaiTro
+                )
+                from KhachHang kh
+                left join kh.taiKhoan tk
+                left join tk.vaiTro vt
+                where (:keyword is null
+                    or lower(kh.maKhachHang) like lower(concat('%', :keyword, '%'))
+                    or lower(kh.tenKhachHang) like lower(concat('%', :keyword, '%'))
+                    or lower(kh.soDienThoai) like lower(concat('%', :keyword, '%'))
+                    or lower(kh.email) like lower(concat('%', :keyword, '%'))
+                    or lower(tk.tenTaiKhoan) like lower(concat('%', :keyword, '%')))
+                and (:trangThai is null or kh.trangThai = :trangThai)
+            """)
     Page<KhachHangResponse> searchKhachHang(
             @Param("keyword") String keyword,
             @Param("trangThai") Integer trangThai,
@@ -45,24 +46,24 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Long> {
     );
 
     @Query("""
-        select new org.example.backend.common.dto.response.KhachHangResponse(
-            kh.id,
-            kh.maKhachHang,
-            tk.id,
-            tk.tenTaiKhoan,
-            kh.tenKhachHang,
-            kh.ngaySinh,
-            kh.soDienThoai,
-            kh.email,
-            kh.trangThai,
-            vt.maVaiTro,
-            vt.tenVaiTro
-        )
-        from KhachHang kh
-        left join kh.taiKhoan tk
-        left join tk.vaiTro vt
-        where kh.id = :id
-    """)
+                select new org.example.backend.common.dto.response.KhachHangResponse(
+                    kh.id,
+                    kh.maKhachHang,
+                    tk.id,
+                    tk.tenTaiKhoan,
+                    kh.tenKhachHang,
+                    kh.ngaySinh,
+                    kh.soDienThoai,
+                    kh.email,
+                    kh.trangThai,
+                    vt.maVaiTro,
+                    vt.tenVaiTro
+                )
+                from KhachHang kh
+                left join kh.taiKhoan tk
+                left join tk.vaiTro vt
+                where kh.id = :id
+            """)
     Optional<KhachHangResponse> getDetail(@Param("id") Integer id);
 
     @Query("select kh from KhachHang kh where kh.maKhachHang = :maKhachHang")
@@ -83,25 +84,32 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Long> {
     Optional<KhachHang> findByIdCustom(@Param("id") Integer id);
 
     @Query("""
-        select new org.example.backend.common.dto.response.TaiKhoanResponse(
-            tk.id,
-            tk.maTaiKhoan,
-            tk.tenTaiKhoan,
-            tk.email,
-            tk.matKhau,
-            tk.soDienThoai,
-            tk.diaChi,
-            vt.id,
-            vt.maVaiTro,
-            vt.tenVaiTro,
-            tk.ngayTao
-        )
-        from KhachHang kh
-        left join kh.taiKhoan tk
-        left join tk.vaiTro vt
-        where kh.id = :idKhachHang
-    """)
+                select new org.example.backend.common.dto.response.TaiKhoanResponse(
+                    tk.id,
+                    tk.maTaiKhoan,
+                    tk.tenTaiKhoan,
+                    tk.email,
+                    tk.matKhau,
+                    tk.soDienThoai,
+                    tk.diaChi,
+                    vt.id,
+                    vt.maVaiTro,
+                    vt.tenVaiTro,
+                    tk.ngayTao
+                )
+                from KhachHang kh
+                left join kh.taiKhoan tk
+                left join tk.vaiTro vt
+                where kh.id = :idKhachHang
+            """)
     Optional<org.example.backend.common.dto.response.TaiKhoanResponse> getTaiKhoanByKhachHangId(
             @Param("idKhachHang") Integer idKhachHang
     );
+
+
+    // Lãnh Minh Hiếu
+    Optional<KhachHang> findByTaiKhoan_Email(String email);
+
+    Optional<KhachHang> findByEmail(String email);
+
 }

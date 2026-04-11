@@ -14,25 +14,27 @@ import java.util.Optional;
 public interface SanPhamChiTietRepository extends JpaRepository<SanPhamChiTiet, Long> {
 
     @Query("""
-        SELECT new org.example.backend.common.dto.response.SanPhamChiTietResponse(
-            spct.id,
-            ha.urlAnh,
-            sp.tenSanPham,
-            dm.tenDanhMuc,
-            ms.tenMauSac,
-            kc.tenKichCo,
-            spct.gia,
-            spct.soLuongTon,
-            spct.trangThai
-        )
-        FROM SanPhamChiTiet spct
-        JOIN spct.sanPham sp
-        LEFT JOIN sp.danhMuc dm
-        LEFT JOIN spct.mauSac ms
-        LEFT JOIN spct.kichCo kc
-        LEFT JOIN spct.hinhAnh ha
-        WHERE sp.id = :id
-    """)
+
+            SELECT new org.example.backend.common.dto.response.SanPhamChiTietResponse(
+                    sp.id,
+                    ha.urlAnh,
+                    sp.tenSanPham,
+                    dm.tenDanhMuc,
+                    ms.tenMauSac,
+                    kc.tenKichCo,
+                    spct.gia,
+                    spct.soLuongTon,
+                    spct.trangThai
+                )
+                FROM SanPhamChiTiet spct
+                JOIN spct.sanPham sp
+                LEFT JOIN sp.danhMuc dm
+                LEFT JOIN spct.mauSac ms
+                LEFT JOIN spct.kichCo kc
+                LEFT JOIN spct.hinhAnh ha
+                WHERE sp.id = :id
+            """)
+
     List<SanPhamChiTietResponse> getChiTietBySanPhamId(@Param("id") Long id);
 
     @Query("""
