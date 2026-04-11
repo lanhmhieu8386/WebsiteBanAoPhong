@@ -2,6 +2,7 @@ package org.example.backend.common.dto.request;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,7 +16,7 @@ public class NhanVienRequest {
     private String tenNhanVien;
     private String soDienThoai;
     private String diaChi;
-    private LocalDateTime ngaySinh;
+    private LocalDate ngaySinh;
     private Boolean gioiTinh;
     private String email;
     private String nguoiTao;

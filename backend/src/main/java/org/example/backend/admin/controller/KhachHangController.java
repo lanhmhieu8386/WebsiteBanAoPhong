@@ -49,27 +49,4 @@ public class KhachHangController {
         return ResponseEntity.ok("Xóa khách hàng thành công");
     }
 
-    // tài khoản khách hàng
-    @GetMapping("/{idKhachHang}/tai-khoan")
-    public ResponseEntity<?> getTaiKhoan(@PathVariable Integer idKhachHang) {
-        return ResponseEntity.ok(taiKhoanService.getTaiKhoanKhachHang(idKhachHang));
-    }
-
-    @PostMapping("/{idKhachHang}/tai-khoan")
-    public ResponseEntity<?> themTaiKhoan(@PathVariable Integer idKhachHang,
-                                          @RequestBody TaiKhoanRequest request) {
-        return ResponseEntity.ok(taiKhoanService.themTaiKhoanChoKhachHang(idKhachHang, request));
-    }
-
-    @PutMapping("/{idKhachHang}/tai-khoan")
-    public ResponseEntity<?> capNhatTaiKhoan(@PathVariable Integer idKhachHang,
-                                             @RequestBody TaiKhoanRequest request) {
-        return ResponseEntity.ok(taiKhoanService.capNhatTaiKhoanKhachHang(idKhachHang, request));
-    }
-
-    @DeleteMapping("/{idKhachHang}/tai-khoan")
-    public ResponseEntity<?> xoaTaiKhoan(@PathVariable Integer idKhachHang) {
-        taiKhoanService.xoaTaiKhoanKhachHang(idKhachHang);
-        return ResponseEntity.ok("Xóa tài khoản khách hàng thành công");
-    }
 }

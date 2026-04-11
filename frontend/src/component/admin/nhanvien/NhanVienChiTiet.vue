@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { updateNhanVien } from "@/api/admin/nhanvien/nhanVienApi";
 import TaiKhoanNhanVien from "./TaiKhoanNhanVien.vue";
 
@@ -13,12 +13,16 @@ const emit = defineEmits(["close", "updated"]);
 const form = ref({});
 const showTaiKhoan = ref(false);
 
+const daCoTaiKhoan = computed(() => {
+  return !!form.value?.idTaiKhoan;
+});
+
 watch(
   () => props.data,
   (val) => {
     form.value = {
       ...val,
-      ngaySinh: val?.ngaySinh ? val.ngaySinh.split("T")[0] : "",
+      ngaySinh: val?.ngaySinh || "",
       trangThai: val?.trangThai === true || val?.trangThai == 1,
       gioiTinh: val?.gioiTinh === true || val?.gioiTinh == 1,
     };
@@ -33,19 +37,25 @@ const dong = () => {
 const capNhat = async () => {
   try {
     const payload = {
-      ...form.value,
+      maNhanVien: form.value.maNhanVien,
+      idTaiKhoan: form.value.idTaiKhoan || null,
+      tenNhanVien: form.value.tenNhanVien,
+      soDienThoai: form.value.soDienThoai,
+      diaChi: form.value.diaChi,
+      ngaySinh: form.value.ngaySinh || null,
       gioiTinh: form.value.gioiTinh,
+      email: form.value.email,
+      nguoiCapNhat: "admin",
       trangThai: form.value.trangThai,
     };
 
     await updateNhanVien(form.value.id, payload);
     alert("Cập nhật nhân viên thành công");
-
     emit("updated");
     dong();
   } catch (e) {
-    console.error(e);
-    alert("Cập nhật thất bại");
+    console.error("Lỗi cập nhật nhân viên:", e);
+    alert(e?.response?.data || "Cập nhật thất bại");
   }
 };
 
@@ -55,20 +65,25 @@ const ngungLamViec = async () => {
 
   try {
     const payload = {
-      ...form.value,
-      trangThai: false,
+      maNhanVien: form.value.maNhanVien,
+      idTaiKhoan: form.value.idTaiKhoan || null,
+      tenNhanVien: form.value.tenNhanVien,
+      soDienThoai: form.value.soDienThoai,
+      diaChi: form.value.diaChi,
+      ngaySinh: form.value.ngaySinh || null,
       gioiTinh: form.value.gioiTinh,
+      email: form.value.email,
+      nguoiCapNhat: "admin",
+      trangThai: false,
     };
 
     await updateNhanVien(form.value.id, payload);
-
     alert("Đã ngừng làm việc");
-
     emit("updated");
     dong();
   } catch (e) {
-    console.error(e);
-    alert("Lỗi");
+    console.error("Lỗi ngừng làm việc:", e);
+    alert(e?.response?.data || "Lỗi");
   }
 };
 
@@ -108,7 +123,7 @@ const capNhatTaiKhoanThanhCong = () => {
 
           <div class="item">
             <label>Tài khoản</label>
-            <input v-model="form.tenTaiKhoan" disabled />
+            <input :value="form.tenTaiKhoan || 'Chưa có tài khoản'" disabled />
           </div>
 
           <div class="item">
@@ -136,7 +151,7 @@ const capNhatTaiKhoanThanhCong = () => {
 
           <div class="item">
             <label>Vai trò</label>
-            <input v-model="form.tenVaiTro" disabled />
+            <input :value="form.tenVaiTro || '-'" disabled />
           </div>
 
           <div class="item full">
@@ -156,11 +171,10 @@ const capNhatTaiKhoanThanhCong = () => {
 
       <div class="modal-footer">
         <button class="btn-account" @click="moQuanLyTaiKhoan">
-          Quản lý tài khoản
+          {{ daCoTaiKhoan ? "Quản lý tài khoản" : "Thêm tài khoản" }}
         </button>
 
         <button class="btn-cancel" @click="dong">Đóng</button>
-
         <button class="btn-update" @click="capNhat">Cập nhật</button>
 
         <button class="btn-delete" v-if="form.trangThai" @click="ngungLamViec">
@@ -173,6 +187,7 @@ const capNhatTaiKhoanThanhCong = () => {
   <TaiKhoanNhanVien
     :show="showTaiKhoan"
     :nhan-vien="form"
+    :mode="daCoTaiKhoan ? 'update' : 'add'"
     @close="dongQuanLyTaiKhoan"
     @updated="capNhatTaiKhoanThanhCong"
   />
@@ -212,6 +227,11 @@ const capNhatTaiKhoanThanhCong = () => {
 .item {
   display: flex;
   flex-direction: column;
+}
+
+.item label {
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
 .item input,

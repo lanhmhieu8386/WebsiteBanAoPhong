@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,7 +39,7 @@ public class NhanVien {
     private String diaChi;
 
     @Column(name = "ngay_sinh")
-    private LocalDateTime ngaySinh;
+    private LocalDate ngaySinh;
 
     @Column(name = "gioi_tinh")
     private Boolean gioiTinh;

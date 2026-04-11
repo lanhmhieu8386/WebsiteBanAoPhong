@@ -1,16 +1,17 @@
 package org.example.backend.common.dto.request;
 
-
 import lombok.Data;
+
+import java.math.BigDecimal;
 
 @Data
 public class SanPhamChiTietRequest {
 
     private String maSanPhamChiTiet;
 
-    private Integer soLuongTon;
+    private Long soLuongTon;
 
-    private Float gia;
+    private BigDecimal gia;
 
     private Boolean trangThai;
 
@@ -19,5 +20,4 @@ public class SanPhamChiTietRequest {
     private Long idMauSac;
 
     private Long idKichCo;
-
 }

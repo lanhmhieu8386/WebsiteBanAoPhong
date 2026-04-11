@@ -1,13 +1,19 @@
 package org.example.backend.admin.service;
 
-import org.example.backend.common.entity.DanhMuc;
-import org.example.backend.common.entity.ThuongHieu;
+import org.example.backend.common.dto.request.ThuongHieuRequest;
+import org.example.backend.common.dto.response.ThuongHieuResponse;
 
 import java.util.List;
 
 public interface ThuongHieuService {
 
-    List<ThuongHieu> getAll();
+    List<ThuongHieuResponse> getAll();
 
-    ThuongHieu getById(Long id);
+    ThuongHieuResponse getById(Long id);
+
+    void add(ThuongHieuRequest request);
+
+    void update(Long id, ThuongHieuRequest request);
+
+    void delete(Long id);
 }

@@ -1,6 +1,5 @@
 package org.example.backend.admin.service.serviceImpl;
 
-import lombok.RequiredArgsConstructor;
 import org.example.backend.admin.service.TaiKhoanService;
 import org.example.backend.common.dto.request.TaiKhoanRequest;
 import org.example.backend.common.dto.response.TaiKhoanResponse;
@@ -83,6 +82,7 @@ public class TaiKhoanServiceImpl implements TaiKhoanService {
         }
 
         TaiKhoan taiKhoan = nhanVien.getTaiKhoan();
+
         nhanVien.setTaiKhoan(null);
         nhanVienRepository.save(nhanVien);
 
@@ -140,6 +140,7 @@ public class TaiKhoanServiceImpl implements TaiKhoanService {
         }
 
         TaiKhoan taiKhoan = khachHang.getTaiKhoan();
+
         khachHang.setTaiKhoan(null);
         khachHangRepository.save(khachHang);
 

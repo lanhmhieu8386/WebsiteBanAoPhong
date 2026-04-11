@@ -32,7 +32,6 @@ const dataDetail = ref(null);
 const showAdd = ref(false);
 const formAdd = ref({
   maKhachHang: "",
-  idTaiKhoan: "",
   tenKhachHang: "",
   ngaySinh: "",
   soDienThoai: "",
@@ -45,7 +44,6 @@ const formAdd = ref({
 const resetFormAdd = () => {
   formAdd.value = {
     maKhachHang: "",
-    idTaiKhoan: "",
     tenKhachHang: "",
     ngaySinh: "",
     soDienThoai: "",
@@ -69,11 +67,13 @@ const themKhachHang = async () => {
   try {
     const payload = {
       ...formAdd.value,
-      idTaiKhoan: formAdd.value.idTaiKhoan
-        ? Number(formAdd.value.idTaiKhoan)
+      ngaySinh: formAdd.value.ngaySinh
+        ? `${formAdd.value.ngaySinh}T00:00:00`
         : null,
       trangThai: Number(formAdd.value.trangThai),
     };
+
+    console.log("Payload thêm khách hàng:", payload);
 
     await addKhachHang(payload);
     alert("Thêm khách hàng thành công");
@@ -81,7 +81,8 @@ const themKhachHang = async () => {
     loadKhachHang();
   } catch (error) {
     console.error("Lỗi thêm khách hàng:", error);
-    alert("Thêm khách hàng thất bại");
+    console.error("Response lỗi:", error?.response?.data);
+    alert(error?.response?.data || "Thêm khách hàng thất bại");
   }
 };
 
@@ -104,6 +105,7 @@ const loadKhachHang = async () => {
 const totalPages = computed(
   () => Math.ceil(totalItems.value / pageSize.value) || 1,
 );
+
 const danhSachHienThi = computed(() => danhSachKhachHang.value);
 
 const goFirst = () => {
@@ -279,10 +281,9 @@ onMounted(() => {
           </li>
         </ul>
 
-        <span
-          >Hiển thị {{ danhSachHienThi.length }} / {{ totalItems }} khách
-          hàng</span
-        >
+        <span>
+          Hiển thị {{ danhSachHienThi.length }} / {{ totalItems }} khách hàng
+        </span>
       </div>
     </div>
   </div>
@@ -306,11 +307,6 @@ onMounted(() => {
           <div class="item">
             <label>Mã KH</label>
             <input v-model="formAdd.maKhachHang" />
-          </div>
-
-          <div class="item">
-            <label>ID tài khoản</label>
-            <input v-model="formAdd.idTaiKhoan" />
           </div>
 
           <div class="item">
@@ -358,26 +354,22 @@ onMounted(() => {
   gap: 16px;
   font-family: Arial;
 }
-
 .box {
   background: #fff;
   border-radius: 10px;
   padding: 18px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
-
 .box-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
-
 .header-actions {
   display: flex;
   gap: 10px;
 }
-
 .icon-btn {
   border: none;
   background: #f4f6f8;
@@ -385,11 +377,9 @@ onMounted(() => {
   padding: 8px;
   cursor: pointer;
 }
-
 .icon-btn img {
   width: 18px;
 }
-
 .btn-add {
   display: flex;
   align-items: center;
@@ -401,13 +391,11 @@ onMounted(() => {
   border-radius: 8px;
   cursor: pointer;
 }
-
 .btn-add img,
 .btn-search img {
   width: 16px;
   filter: brightness(0) invert(1);
 }
-
 .filter-box {
   background: #fff;
   padding: 18px;
@@ -417,13 +405,11 @@ onMounted(() => {
   gap: 16px;
   align-items: end;
 }
-
 .filter-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-
 .filter-item input,
 .filter-item select {
   height: 36px;
@@ -431,12 +417,10 @@ onMounted(() => {
   border: 1px solid #f3b6b6;
   padding: 0 10px;
 }
-
 .filter-search {
   display: flex;
   align-items: flex-end;
 }
-
 .btn-search {
   height: 36px;
   padding: 0 16px;
@@ -449,46 +433,37 @@ onMounted(() => {
   gap: 6px;
   cursor: pointer;
 }
-
 .lau-table {
   width: 100%;
   border-collapse: collapse;
 }
-
 .lau-table th {
   background: #e9f2fb;
   padding: 12px;
   text-align: left;
 }
-
 .lau-table td {
   padding: 12px;
   border-bottom: 1px solid #eee;
 }
-
 .status-badge {
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   color: #fff;
 }
-
 .status-active {
   background: #28a745;
 }
-
 .status-cancel {
   background: #ff4d4f;
 }
-
 .text-bold {
   font-weight: 600;
 }
-
 .text-center {
   text-align: center;
 }
-
 .btn-action-icon {
   border: none;
   background: #f4f6f8;
@@ -502,15 +477,12 @@ onMounted(() => {
   margin: 0 3px;
   transition: 0.2s;
 }
-
 .btn-action-icon:hover {
   background: #e9f2fb;
 }
-
 .btn-action-icon img {
   width: 16px;
 }
-
 .pagination-wrapper {
   display: flex;
   align-items: center;
@@ -519,14 +491,12 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 10px;
 }
-
 .page-size-box {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
 }
-
 .page-size-select {
   height: 32px;
   padding: 0 10px;
@@ -535,7 +505,6 @@ onMounted(() => {
   background: #fff;
   cursor: pointer;
 }
-
 .pagination {
   background: #f8f4f5;
   border-radius: 10px;
@@ -543,7 +512,6 @@ onMounted(() => {
   display: flex;
   gap: 4px;
 }
-
 .page-item .page-link {
   min-width: 30px;
   height: 30px;
@@ -555,31 +523,25 @@ onMounted(() => {
   border-radius: 8px;
   cursor: pointer;
 }
-
 .page-link img {
   width: 16px;
 }
-
 .page-item.active .page-link {
   background: #3b6cff;
   color: #fff;
   box-shadow: 0 4px 10px rgba(59, 108, 255, 0.35);
 }
-
 .page-item:not(.active) .page-link:hover {
   background: #f1f3f5;
 }
-
 .action-group {
   display: inline-flex;
   gap: 6px;
 }
-
 .lau-table td:last-child,
 .lau-table th:last-child {
   text-align: center;
 }
-
 .overlay {
   position: fixed;
   inset: 0;
@@ -589,7 +551,6 @@ onMounted(() => {
   align-items: center;
   z-index: 99999;
 }
-
 .modal-box {
   background: #fff;
   border-radius: 12px;
@@ -598,17 +559,14 @@ onMounted(() => {
   position: relative;
   z-index: 100000;
 }
-
 .add-box {
   width: 760px;
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
 }
-
 .btn-close {
   border: none;
   background: red;
@@ -617,27 +575,22 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
 }
-
 .modal-body {
   margin-top: 10px;
 }
-
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
 }
-
 .item {
   display: flex;
   flex-direction: column;
 }
-
 .item label {
   font-weight: 600;
   margin-bottom: 4px;
 }
-
 .item input,
 .item textarea,
 .item select {
@@ -646,18 +599,15 @@ onMounted(() => {
   border: 1px solid #ddd;
   background: #fff;
 }
-
 .full {
   grid-column: 1 / -1;
 }
-
 .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 16px;
 }
-
 .btn-update {
   background: #3b6cff;
   color: white;
@@ -666,7 +616,6 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
 }
-
 .btn-cancel {
   background: #ccc;
   border: none;

@@ -1,20 +1,23 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import {
   getTaiKhoanKhachHang,
   addTaiKhoanKhachHang,
   updateTaiKhoanKhachHang,
   deleteTaiKhoanKhachHang,
-} from "@/api/admin/khachhang/khachHangApi";
+  getAllVaiTro,
+} from "@/api/admin/taikhoan/TaiKhoanApi";
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   khachHang: { type: Object, default: () => ({}) },
+  mode: { type: String, default: "update" }, // add | update
 });
 
 const emit = defineEmits(["close", "updated"]);
 
-const hasTaiKhoan = ref(false);
+const loading = ref(false);
+const danhSachVaiTro = ref([]);
 
 const formTaiKhoan = ref({
   maTaiKhoan: "",
@@ -23,110 +26,210 @@ const formTaiKhoan = ref({
   matKhau: "",
   soDienThoai: "",
   diaChi: "",
-  idVaiTro: 3,
+  idVaiTro: "",
+  trangThai: true,
 });
 
-const resetFormTaiKhoan = () => {
+const isAddMode = computed(() => props.mode === "add");
+
+const resetForm = () => {
   formTaiKhoan.value = {
     maTaiKhoan: "",
     tenTaiKhoan: "",
-    email: "",
+    email: props.khachHang?.email || "",
     matKhau: "",
-    soDienThoai: "",
+    soDienThoai: props.khachHang?.soDienThoai || "",
     diaChi: "",
-    idVaiTro: 3,
+    idVaiTro: "",
+    trangThai: true,
   };
 };
 
-const loadTaiKhoan = async () => {
-  if (!props.khachHang?.id) {
-    hasTaiKhoan.value = false;
-    resetFormTaiKhoan();
-    return;
+const loadVaiTro = async () => {
+  try {
+    const res = await getAllVaiTro();
+    danhSachVaiTro.value = Array.isArray(res.data) ? res.data : [];
+  } catch (error) {
+    console.error("Lỗi load vai trò:", error);
+    console.error("Response lỗi vai trò:", error?.response?.data);
+    danhSachVaiTro.value = [];
   }
+};
+
+const loadTaiKhoanChiTiet = async () => {
+  if (!props.khachHang?.id) return;
 
   try {
+    loading.value = true;
     const res = await getTaiKhoanKhachHang(props.khachHang.id);
+    const data = res.data || {};
 
-    if (res?.data) {
-      hasTaiKhoan.value = true;
-      formTaiKhoan.value = {
-        maTaiKhoan: res.data.maTaiKhoan || "",
-        tenTaiKhoan: res.data.tenTaiKhoan || "",
-        email: res.data.email || "",
-        matKhau: res.data.matKhau || "",
-        soDienThoai: res.data.soDienThoai || "",
-        diaChi: res.data.diaChi || "",
-        idVaiTro: 3,
-      };
-    } else {
-      hasTaiKhoan.value = false;
-      resetFormTaiKhoan();
-    }
+    formTaiKhoan.value = {
+      maTaiKhoan: data.maTaiKhoan || "",
+      tenTaiKhoan: data.tenTaiKhoan || "",
+      email: data.email || props.khachHang?.email || "",
+      matKhau: "",
+      soDienThoai: data.soDienThoai || props.khachHang?.soDienThoai || "",
+      diaChi: data.diaChi || "",
+      idVaiTro: data.idVaiTro || data.vaiTroId || data.vaiTro?.id || "",
+      trangThai: data.trangThai ?? true,
+    };
   } catch (error) {
-    hasTaiKhoan.value = false;
-    resetFormTaiKhoan();
+    console.error("Lỗi load tài khoản khách hàng:", error);
+    console.error("Response lỗi:", error?.response?.data);
+    alert(error?.response?.data || "Không lấy được thông tin tài khoản");
+  } finally {
+    loading.value = false;
   }
 };
 
 watch(
-  () => props.show,
-  async (val) => {
-    if (val) {
-      await loadTaiKhoan();
-    }
-  },
-);
+  () => [props.show, props.mode, props.khachHang?.id],
+  async ([show]) => {
+    if (!show) return;
 
-watch(
-  () => props.khachHang,
-  async (val) => {
-    if (props.show && val?.id) {
-      await loadTaiKhoan();
+    await loadVaiTro();
+
+    if (isAddMode.value) {
+      resetForm();
+    } else {
+      await loadTaiKhoanChiTiet();
     }
   },
-  { deep: true },
+  { immediate: true },
 );
 
 const dong = () => {
   emit("close");
 };
 
-const luuTaiKhoan = async () => {
+const validateForm = () => {
+  if (!formTaiKhoan.value.maTaiKhoan?.trim()) {
+    alert("Mã tài khoản không được để trống");
+    return false;
+  }
+
+  if (!formTaiKhoan.value.tenTaiKhoan?.trim()) {
+    alert("Tên tài khoản không được để trống");
+    return false;
+  }
+
+  if (isAddMode.value && !formTaiKhoan.value.matKhau?.trim()) {
+    alert("Mật khẩu không được để trống");
+    return false;
+  }
+
+  if (!formTaiKhoan.value.idVaiTro) {
+    alert("Vui lòng chọn vai trò");
+    return false;
+  }
+
+  return true;
+};
+
+const taoPayload = () => {
+  const payload = {
+    maTaiKhoan: formTaiKhoan.value.maTaiKhoan?.trim(),
+    tenTaiKhoan: formTaiKhoan.value.tenTaiKhoan?.trim(),
+    email: formTaiKhoan.value.email?.trim() || null,
+    soDienThoai: formTaiKhoan.value.soDienThoai?.trim() || null,
+    diaChi: formTaiKhoan.value.diaChi?.trim() || null,
+    idVaiTro: Number(formTaiKhoan.value.idVaiTro),
+    trangThai:
+      formTaiKhoan.value.trangThai === true ||
+      formTaiKhoan.value.trangThai === "true",
+  };
+
+  if (formTaiKhoan.value.matKhau?.trim()) {
+    payload.matKhau = formTaiKhoan.value.matKhau.trim();
+  }
+
+  return payload;
+};
+
+const themTaiKhoan = async () => {
+  if (!validateForm()) return;
+
   try {
-    const payload = {
-      ...formTaiKhoan.value,
-      idVaiTro: 3,
-    };
+    loading.value = true;
 
-    if (hasTaiKhoan.value) {
-      await updateTaiKhoanKhachHang(props.khachHang.id, payload);
-      alert("Cập nhật tài khoản thành công");
-    } else {
-      await addTaiKhoanKhachHang(props.khachHang.id, payload);
-      alert("Thêm tài khoản thành công");
-    }
+    const payload = taoPayload();
 
+    console.log("Payload thêm tài khoản khách hàng:", payload);
+    console.log("ID khách hàng:", props.khachHang.id);
+
+    await addTaiKhoanKhachHang(props.khachHang.id, payload);
+
+    alert("Thêm tài khoản thành công");
     emit("updated");
+    emit("close");
   } catch (error) {
-    console.error(error);
-    alert("Lưu tài khoản thất bại");
+    console.error("Lỗi thêm tài khoản khách hàng:", error);
+    console.error("Status:", error?.response?.status);
+    console.error("Response:", error?.response?.data);
+    alert(error?.response?.data || "Thêm tài khoản thất bại");
+  } finally {
+    loading.value = false;
+  }
+};
+
+const capNhatTaiKhoan = async () => {
+  if (!validateForm()) return;
+
+  try {
+    loading.value = true;
+
+    const payload = taoPayload();
+
+    console.log("Payload cập nhật tài khoản khách hàng:", payload);
+    console.log("ID khách hàng:", props.khachHang.id);
+
+    await updateTaiKhoanKhachHang(props.khachHang.id, payload);
+
+    alert("Cập nhật tài khoản thành công");
+    emit("updated");
+    emit("close");
+  } catch (error) {
+    console.error("Lỗi cập nhật tài khoản khách hàng:", error);
+    console.error("Status:", error?.response?.status);
+    console.error("Response:", error?.response?.data);
+    alert(error?.response?.data || "Cập nhật tài khoản thất bại");
+  } finally {
+    loading.value = false;
   }
 };
 
 const xoaTaiKhoan = async () => {
-  const ok = confirm("Bạn có chắc muốn xóa tài khoản khách hàng này?");
+  if (isAddMode.value) return;
+
+  const ok = confirm(
+    `Bạn có chắc muốn xóa tài khoản của khách hàng ${props.khachHang?.tenKhachHang || ""}?`,
+  );
   if (!ok) return;
 
   try {
+    loading.value = true;
+
     await deleteTaiKhoanKhachHang(props.khachHang.id);
+
     alert("Xóa tài khoản thành công");
-    hasTaiKhoan.value = false;
-    resetFormTaiKhoan();
     emit("updated");
+    emit("close");
   } catch (error) {
-    console.error(error);
-    alert("Xóa tài khoản thất bại");
+    console.error("Lỗi xóa tài khoản khách hàng:", error);
+    console.error("Status:", error?.response?.status);
+    console.error("Response:", error?.response?.data);
+    alert(error?.response?.data || "Xóa tài khoản thất bại");
+  } finally {
+    loading.value = false;
+  }
+};
+
+const submitForm = async () => {
+  if (isAddMode.value) {
+    await themTaiKhoan();
+  } else {
+    await capNhatTaiKhoan();
   }
 };
 </script>
@@ -135,20 +238,16 @@ const xoaTaiKhoan = async () => {
   <div v-if="show" class="overlay">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>
-          {{
-            hasTaiKhoan
-              ? "Cập nhật tài khoản khách hàng"
-              : "Thêm tài khoản khách hàng"
-          }}
-        </h3>
+        <h3>{{ isAddMode ? "Thêm tài khoản" : "Quản lý tài khoản" }}</h3>
         <button class="btn-close" @click="dong">X</button>
       </div>
 
-      <div class="modal-body">
-        <div class="info-box">
-          <p><strong>Mã KH:</strong> {{ khachHang?.maKhachHang || "" }}</p>
-          <p><strong>Tên KH:</strong> {{ khachHang?.tenKhachHang || "" }}</p>
+      <div class="modal-body" v-if="!loading">
+        <div class="info-khach-hang">
+          <p>
+            <strong>Khách hàng:</strong> {{ khachHang?.tenKhachHang || "-" }}
+          </p>
+          <p><strong>Mã KH:</strong> {{ khachHang?.maKhachHang || "-" }}</p>
         </div>
 
         <div class="grid">
@@ -168,18 +267,43 @@ const xoaTaiKhoan = async () => {
           </div>
 
           <div class="item">
-            <label>Mật khẩu</label>
-            <input v-model="formTaiKhoan.matKhau" />
-          </div>
-
-          <div class="item">
             <label>Số điện thoại</label>
             <input v-model="formTaiKhoan.soDienThoai" />
           </div>
 
           <div class="item">
+            <label
+              >Mật khẩu {{ isAddMode ? "" : "(để trống nếu không đổi)" }}</label
+            >
+            <input
+              type="password"
+              v-model="formTaiKhoan.matKhau"
+              :placeholder="
+                isAddMode ? 'Nhập mật khẩu' : 'Không đổi thì để trống'
+              "
+            />
+          </div>
+
+          <div class="item">
             <label>Vai trò</label>
-            <input value="Khách hàng" disabled />
+            <select v-model="formTaiKhoan.idVaiTro">
+              <option value="">-- Chọn vai trò --</option>
+              <option
+                v-for="vt in danhSachVaiTro"
+                :key="vt.id"
+                :value="Number(vt.id)"
+              >
+                {{ vt.tenVaiTro }}
+              </option>
+            </select>
+          </div>
+
+          <div class="item">
+            <label>Trạng thái</label>
+            <select v-model="formTaiKhoan.trangThai">
+              <option :value="true">Hoạt động</option>
+              <option :value="false">Ngừng hoạt động</option>
+            </select>
           </div>
 
           <div class="item full">
@@ -189,15 +313,22 @@ const xoaTaiKhoan = async () => {
         </div>
       </div>
 
+      <div v-else class="loading-box">Đang tải dữ liệu...</div>
+
       <div class="modal-footer">
         <button class="btn-cancel" @click="dong">Đóng</button>
 
-        <button class="btn-update" @click="luuTaiKhoan">
-          {{ hasTaiKhoan ? "Cập nhật tài khoản" : "Thêm tài khoản" }}
+        <button
+          v-if="!isAddMode"
+          class="btn-delete"
+          @click="xoaTaiKhoan"
+          :disabled="loading"
+        >
+          Xóa tài khoản
         </button>
 
-        <button class="btn-delete" v-if="hasTaiKhoan" @click="xoaTaiKhoan">
-          Xóa tài khoản
+        <button class="btn-save" @click="submitForm" :disabled="loading">
+          {{ isAddMode ? "Thêm tài khoản" : "Cập nhật tài khoản" }}
         </button>
       </div>
     </div>
@@ -208,104 +339,109 @@ const xoaTaiKhoan = async () => {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 100001;
+  justify-content: center;
+  z-index: 1000;
 }
-
 .modal-box {
   width: 760px;
+  max-width: calc(100vw - 40px);
   background: #fff;
   border-radius: 12px;
   padding: 20px;
 }
-
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
-
-.modal-body {
-  margin-top: 10px;
+.btn-close {
+  border: none;
+  background: red;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
 }
-
-.info-box {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  padding: 10px 12px;
+.info-khach-hang {
+  background: #f5f8ff;
+  border: 1px solid #dce7ff;
   border-radius: 8px;
-  margin-bottom: 12px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
 }
-
-.info-box p {
+.info-khach-hang p {
   margin: 4px 0;
 }
-
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
-
 .item {
   display: flex;
   flex-direction: column;
 }
-
+.item label {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
 .item input,
+.item select,
 .item textarea {
-  padding: 8px;
   border: 1px solid #ddd;
   border-radius: 6px;
+  padding: 9px 10px;
+  outline: none;
 }
-
+.item textarea {
+  min-height: 90px;
+  resize: vertical;
+}
 .full {
   grid-column: 1 / -1;
 }
-
+.loading-box {
+  padding: 30px 0;
+  text-align: center;
+  font-size: 15px;
+  color: #666;
+}
 .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 16px;
-  flex-wrap: wrap;
+  margin-top: 18px;
 }
-
-.btn-update {
-  background: #3b6cff;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-delete {
-  background: red;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 .btn-cancel {
-  background: #ccc;
+  background: #d9d9d9;
   border: none;
-  padding: 8px 14px;
+  padding: 9px 14px;
   border-radius: 6px;
   cursor: pointer;
 }
-
-.btn-close {
-  border: none;
-  background: red;
+.btn-save {
+  background: #1677ff;
   color: white;
-  padding: 6px 10px;
+  border: none;
+  padding: 9px 14px;
   border-radius: 6px;
   cursor: pointer;
+}
+.btn-delete {
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 9px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-save:disabled,
+.btn-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

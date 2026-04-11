@@ -1,13 +1,19 @@
 package org.example.backend.admin.service;
 
-import org.example.backend.common.entity.ChatLieu;
-import org.example.backend.common.entity.ThuongHieu;
+import org.example.backend.common.dto.request.ChatLieuRequest;
+import org.example.backend.common.dto.response.ChatLieuResponse;
 
 import java.util.List;
 
 public interface ChatLieuService {
 
-    List<ChatLieu> getAll();
+    List<ChatLieuResponse> getAll();
 
-    ChatLieu getById(Long id);
+    ChatLieuResponse getById(Long id);
+
+    void add(ChatLieuRequest request);
+
+    void update(Long id, ChatLieuRequest request);
+
+    void delete(Long id);
 }

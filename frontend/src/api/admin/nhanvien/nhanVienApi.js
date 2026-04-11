@@ -24,20 +24,3 @@ export const updateNhanVien = async (id, data) => {
 export const deleteNhanVien = async (id) => {
   return axiosClient.delete(`/admin/nhan-vien/xoa/${id}`);
 };
-
-/// tài khoản nhân viên
-export const getTaiKhoanNhanVien = async (idNhanVien) => {
-  return axiosClient.get(`/admin/nhan-vien/${idNhanVien}/tai-khoan`);
-};
-
-export const addTaiKhoanNhanVien = async (idNhanVien, data) => {
-  return axiosClient.post(`/admin/nhan-vien/${idNhanVien}/tai-khoan`, data);
-};
-
-export const updateTaiKhoanNhanVien = async (idNhanVien, data) => {
-  return axiosClient.put(`/admin/nhan-vien/${idNhanVien}/tai-khoan`, data);
-};
-
-export const deleteTaiKhoanNhanVien = async (idNhanVien) => {
-  return axiosClient.delete(`/admin/nhan-vien/${idNhanVien}/tai-khoan`);
-};

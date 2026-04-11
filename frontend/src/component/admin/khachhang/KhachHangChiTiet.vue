@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { updateKhachHang } from "@/api/admin/khachhang/khachHangApi";
 import TaiKhoanKhachHang from "./TaiKhoanKhachHang.vue";
 
@@ -12,6 +12,10 @@ const emit = defineEmits(["close", "updated"]);
 
 const form = ref({});
 const showTaiKhoan = ref(false);
+
+const daCoTaiKhoan = computed(() => {
+  return !!form.value?.idTaiKhoan;
+});
 
 watch(
   () => props.data,
@@ -33,8 +37,11 @@ const capNhat = async () => {
   try {
     const payload = {
       ...form.value,
+      ngaySinh: form.value.ngaySinh ? `${form.value.ngaySinh}T00:00:00` : null,
       trangThai: Number(form.value.trangThai),
     };
+
+    console.log("Payload cập nhật khách hàng:", payload);
 
     await updateKhachHang(form.value.id, payload);
     alert("Cập nhật thành công");
@@ -43,7 +50,8 @@ const capNhat = async () => {
     dong();
   } catch (e) {
     console.error(e);
-    alert("Cập nhật thất bại");
+    console.error("Response lỗi:", e?.response?.data);
+    alert(e?.response?.data || "Cập nhật thất bại");
   }
 };
 
@@ -56,8 +64,11 @@ const xoaKhachHang = async () => {
   try {
     const payload = {
       ...form.value,
+      ngaySinh: form.value.ngaySinh ? `${form.value.ngaySinh}T00:00:00` : null,
       trangThai: 0,
     };
+
+    console.log("Payload ngừng hoạt động khách hàng:", payload);
 
     await updateKhachHang(form.value.id, payload);
 
@@ -67,7 +78,8 @@ const xoaKhachHang = async () => {
     dong();
   } catch (e) {
     console.error(e);
-    alert("Lỗi");
+    console.error("Response lỗi:", e?.response?.data);
+    alert(e?.response?.data || "Lỗi");
   }
 };
 
@@ -107,7 +119,7 @@ const capNhatTaiKhoanThanhCong = () => {
 
           <div class="item">
             <label>Tài khoản</label>
-            <input v-model="form.tenTaiKhoan" disabled />
+            <input :value="form.tenTaiKhoan || 'Chưa có tài khoản'" disabled />
           </div>
 
           <div class="item">
@@ -137,7 +149,7 @@ const capNhatTaiKhoanThanhCong = () => {
 
       <div class="modal-footer">
         <button class="btn-account" @click="moQuanLyTaiKhoan">
-          Quản lý tài khoản
+          {{ daCoTaiKhoan ? "Quản lý tài khoản" : "Thêm tài khoản" }}
         </button>
 
         <button class="btn-cancel" @click="dong">Đóng</button>
@@ -158,6 +170,7 @@ const capNhatTaiKhoanThanhCong = () => {
   <TaiKhoanKhachHang
     :show="showTaiKhoan"
     :khach-hang="form"
+    :mode="daCoTaiKhoan ? 'update' : 'add'"
     @close="dongQuanLyTaiKhoan"
     @updated="capNhatTaiKhoanThanhCong"
   />
@@ -173,43 +186,36 @@ const capNhatTaiKhoanThanhCong = () => {
   align-items: center;
   z-index: 999;
 }
-
 .modal-box {
   width: 700px;
   background: white;
   border-radius: 12px;
   padding: 20px;
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-top: 10px;
 }
-
 .item {
   display: flex;
   flex-direction: column;
 }
-
 .item input,
 .item select {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 6px;
 }
-
 .full {
   grid-column: 1 / -1;
 }
-
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -217,7 +223,6 @@ const capNhatTaiKhoanThanhCong = () => {
   margin-top: 16px;
   flex-wrap: wrap;
 }
-
 .btn-update {
   background: #3b6cff;
   color: white;
@@ -226,7 +231,6 @@ const capNhatTaiKhoanThanhCong = () => {
   border-radius: 6px;
   cursor: pointer;
 }
-
 .btn-delete {
   background: red;
   color: white;
@@ -235,7 +239,6 @@ const capNhatTaiKhoanThanhCong = () => {
   border-radius: 6px;
   cursor: pointer;
 }
-
 .btn-cancel {
   background: #ccc;
   border: none;
@@ -243,7 +246,6 @@ const capNhatTaiKhoanThanhCong = () => {
   border-radius: 6px;
   cursor: pointer;
 }
-
 .btn-account {
   background: #0ea5e9;
   color: white;
@@ -253,7 +255,6 @@ const capNhatTaiKhoanThanhCong = () => {
   margin-right: auto;
   cursor: pointer;
 }
-
 .btn-close {
   border: none;
   background: red;

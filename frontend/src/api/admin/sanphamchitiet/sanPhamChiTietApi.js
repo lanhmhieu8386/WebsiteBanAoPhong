@@ -1,26 +1,26 @@
 import axiosClient from "@/auth/axiosClient";
 
-// lấy danh sách sản phẩm chi tiết
-export const getSanPhamChiTiet = () => {
-  return axiosClient.get("/admin/san-pham-chi-tiet/hien-thi");
+// lấy danh sách sản phẩm chi tiết theo id sản phẩm
+export const getChiTietBySanPhamId = (id) => {
+  return axiosClient.get(`/admin/san-pham-chi-tiet/chi-tiet/san-pham/${id}`);
 };
 
-// lấy chi tiết theo id
-export const getChiTietBySanPhamId = (id) => {
-  return axiosClient.get(`/admin/san-pham-chi-tiet/chi-tiet/${id}`);
+// lấy 1 sản phẩm chi tiết theo id
+export const getSanPhamChiTietById = (id) => {
+  return axiosClient.get(`/admin/san-pham-chi-tiet/detail/${id}`);
 };
 
 // thêm sản phẩm chi tiết
 export const addSanPhamChiTiet = (data) => {
-  return axiosClient.post("/admin/san-pham-chi-tiet", data);
+  return axiosClient.post("/admin/san-pham-chi-tiet/them", data);
 };
 
-// cập nhật
+// cập nhật sản phẩm chi tiết
 export const updateSanPhamChiTiet = (id, data) => {
-  return axiosClient.put(`/admin/san-pham-chi-tiet/${id}`, data);
+  return axiosClient.put(`/admin/san-pham-chi-tiet/sua/${id}`, data);
 };
 
-// xoá
+// xóa mềm sản phẩm chi tiết
 export const deleteSanPhamChiTiet = (id) => {
-  return axiosClient.delete(`/admin/san-pham-chi-tiet/${id}`);
+  return axiosClient.put(`/admin/san-pham-chi-tiet/xoa/${id}`);
 };

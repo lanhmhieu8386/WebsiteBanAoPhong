@@ -50,28 +50,4 @@ public class NhanVienController {
         return ResponseEntity.ok("Xóa nhân viên thành công");
     }
 
-
-    // tài khoản của nhân vien
-    @GetMapping("/{idNhanVien}/tai-khoan")
-    public ResponseEntity<?> getTaiKhoan(@PathVariable Integer idNhanVien) {
-        return ResponseEntity.ok(taiKhoanService.getTaiKhoanNhanVien(idNhanVien));
-    }
-
-    @PostMapping("/{idNhanVien}/tai-khoan")
-    public ResponseEntity<?> themTaiKhoan(@PathVariable Integer idNhanVien,
-                                          @RequestBody TaiKhoanRequest request) {
-        return ResponseEntity.ok(taiKhoanService.themTaiKhoanChoNhanVien(idNhanVien, request));
-    }
-
-    @PutMapping("/{idNhanVien}/tai-khoan")
-    public ResponseEntity<?> capNhatTaiKhoan(@PathVariable Integer idNhanVien,
-                                             @RequestBody TaiKhoanRequest request) {
-        return ResponseEntity.ok(taiKhoanService.capNhatTaiKhoanNhanVien(idNhanVien, request));
-    }
-
-    @DeleteMapping("/{idNhanVien}/tai-khoan")
-    public ResponseEntity<?> xoaTaiKhoan(@PathVariable Integer idNhanVien) {
-        taiKhoanService.xoaTaiKhoanNhanVien(idNhanVien);
-        return ResponseEntity.ok("Xóa tài khoản nhân viên thành công");
-    }
 }

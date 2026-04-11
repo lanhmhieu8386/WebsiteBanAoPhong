@@ -1,9 +1,9 @@
 package org.example.backend.common.repository;
 
-import org.example.backend.common.entity.ThuongHieu;
+import org.example.backend.common.entity.HinhAnh;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ThuongHieuRepository extends JpaRepository<ThuongHieu, Long> {
+public interface HinhAnhRepository extends JpaRepository<HinhAnh, Long> {
 }

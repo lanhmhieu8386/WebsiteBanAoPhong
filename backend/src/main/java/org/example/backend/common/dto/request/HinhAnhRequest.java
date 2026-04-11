@@ -7,6 +7,4 @@ public class HinhAnhRequest {
 
     private String urlAnh;
 
-    private Long idSanPhamChiTiet;
-
 }
