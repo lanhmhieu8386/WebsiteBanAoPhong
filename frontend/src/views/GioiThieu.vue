@@ -15,7 +15,7 @@ import Footer from "@/component/customer/GioiThieu/Footer.vue";
 
 <style scoped>
 .hero {
-  margin-top: 60px;
+  margin-top: 100px;
 }
 body {
   padding-top: 70px; /* hoặc 72–80px tùy navbar */

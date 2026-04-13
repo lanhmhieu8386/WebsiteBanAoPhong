@@ -5,4 +5,10 @@ import org.example.backend.customer.dto.response.GioHangResponse;
 
 public interface GioHangService {
     GioHangResponse themVaoGio(ThemGioHangRequest req);
+
+    GioHangResponse getMyCart();
+
+    GioHangResponse updateSoLuong(ThemGioHangRequest req);
+
+    GioHangResponse removeItem(Long idSanPhamChiTiet);
 }
