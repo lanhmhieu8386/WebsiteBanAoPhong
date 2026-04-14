@@ -16,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,7 +38,7 @@ public class GioHangServiceImpl implements GioHangService {
     @Override
     public GioHangResponse themVaoGio(ThemGioHangRequest req) {
 
-        // 🔥 LẤY USER TỪ SECURITY
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
@@ -84,8 +86,79 @@ public class GioHangServiceImpl implements GioHangService {
         return mapToResponse(gioHang);
     }
 
+    @Override
+    public GioHangResponse getMyCart() {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        TaiKhoanCustomer tk = taiKhoanCustomerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        GioHangCustomer gioHang = gioHangRepository
+                .findByTaiKhoanCustomer_Id(tk.getId())
+                .orElseThrow(() -> new RuntimeException("Chưa có giỏ hàng"));
+
+        return mapToResponse(gioHang);
+    }
+
+    @Override
+    public GioHangResponse updateSoLuong(ThemGioHangRequest req) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        TaiKhoanCustomer tk = taiKhoanCustomerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        GioHangCustomer gioHang = gioHangRepository
+                .findByTaiKhoanCustomer_Id(tk.getId())
+                .orElseThrow(() -> new RuntimeException("Chưa có giỏ hàng"));
+
+        GioHangChiTietCustomer item = gioHangChiTietRepository
+                .findByGioHang_IdAndSanPhamChiTiet_Id(
+                        gioHang.getId(),
+                        req.getIdSanPhamChiTiet()
+                )
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không có trong giỏ"));
+
+        if (req.getSoLuong() <= 0) {
+            gioHangChiTietRepository.delete(item);
+        } else {
+            item.setSoLuong(req.getSoLuong());
+            gioHangChiTietRepository.save(item);
+        }
+
+        return mapToResponse(gioHang);
+    }
+
+    @Override
+    public GioHangResponse removeItem(Long idSanPhamChiTiet) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        TaiKhoanCustomer tk = taiKhoanCustomerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        GioHangCustomer gioHang = gioHangRepository
+                .findByTaiKhoanCustomer_Id(tk.getId())
+                .orElseThrow(() -> new RuntimeException("Chưa có giỏ hàng"));
+
+        GioHangChiTietCustomer item = gioHangChiTietRepository
+                .findByGioHang_IdAndSanPhamChiTiet_Id(
+                        gioHang.getId(),
+                        idSanPhamChiTiet
+                )
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm trong giỏ"));
+
+        gioHangChiTietRepository.delete(item);
+
+        return mapToResponse(gioHang);
+    }
+
     // ==========================
-    // 🛒 Tạo giỏ hàng mới
+    //  Tạo giỏ hàng mới
     // ==========================
     private GioHangCustomer taoGioHangMoi(Long userId) {
         GioHangCustomer gioHang = new GioHangCustomer();
@@ -100,22 +173,46 @@ public class GioHangServiceImpl implements GioHangService {
     }
 
     // ==========================
-    // 🔄 Map sang response
+    //  Map sang response
     // ==========================
     private GioHangResponse mapToResponse(GioHangCustomer gioHang) {
 
-        // load lại list mới nhất
-        GioHangCustomer gh = gioHangRepository.findById(gioHang.getId()).get();
+        GioHangCustomer gh = gioHangRepository.findById(gioHang.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giỏ hàng"));
 
-        int tongSoLuong = gh.getGioHangChiTiets()
+        // ===== map items =====
+        List<GioHangResponse.Item> items = gh.getGioHangChiTiets()
                 .stream()
-                .mapToInt(GioHangChiTietCustomer::getSoLuong)
+                .map(ct -> {
+                    SanPhamChiTietCustomer sp = ct.getSanPhamChiTiet();
+
+                    GioHangResponse.Item item = new GioHangResponse.Item();
+                    item.setIdSanPhamChiTiet(sp.getId());
+                    item.setTenSanPham(sp.getSanPham().getTenSanPham()); // sửa nếu khác field
+                    item.setSoLuong(ct.getSoLuong());
+                    item.setGia(sp.getGia());
+                    item.setThanhTien(
+                            sp.getGia().multiply(BigDecimal.valueOf(ct.getSoLuong()))
+                    );
+
+                    return item;
+                })
+                .toList();
+
+        int tongSoLuong = items.stream()
+                .mapToInt(GioHangResponse.Item::getSoLuong)
                 .sum();
+
+        BigDecimal tongTien = items.stream()
+                .map(GioHangResponse.Item::getThanhTien)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return GioHangResponse.builder()
                 .idGioHang(gh.getId())
                 .maGioHang(gh.getMaGioHang())
+                .items(items)
                 .tongSoLuong(tongSoLuong)
+                .tongTien(tongTien)
                 .build();
     }
 }

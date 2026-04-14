@@ -1,183 +1,195 @@
 <script setup>
-import { ref, computed } from "vue";
-import { useRouter } from "vue-router"; // Import cái này vào
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { deleteGioHang, hienThiGioHang, updateGioHang } from "@/api/customer/gioHangApi";
+import aoPhong1 from "@/assets/images/aophong1.jpg";
 
 const router = useRouter();
-// Dữ liệu mẫu chia theo Shop cho giống Shopee
-const cartByShop = ref([
-  {
-    shopName: "Hadupo 1991",
-    items: [
-      {
-        id: 101,
-        name: "Áo thun nam nữ NGÔI SAO CHỮ THÁI THÊU & QUẦN HOA SAO...",
-        image: "https://via.placeholder.com/80",
-        variant: "ÁO NS CHỮ THÁI ĐEN, XL",
-        price: 89999,
-        quantity: 1,
-        selected: false,
-      },
-    ],
-  },
-  {
-    shopName: "La_store",
-    items: [
-      {
-        id: 201,
-        name: "Giày thể thao Sneaker SB Force 58 Light Smoke Burgundy...",
-        image: "https://via.placeholder.com/80",
-        variant: "SB Mộc Đỏ, 43",
-        price: 335000,
-        quantity: 1,
-        selected: false,
-      },
-    ],
-  },
-]);
-
-const goToCheckout = () => {
-  // Lọc ra những thằng được tích chọn
-  const itemsToPay = cartByShop.value
-    .flatMap((shop) => shop.items)
-    .filter((i) => i.selected);
-
-  if (itemsToPay.length === 0) {
-    alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán!");
-    return;
-  }
-
-  // Lưu tạm vào localStorage để trang ThanhToan.vue có thể lấy ra dùng
-  localStorage.setItem("checkout_items", JSON.stringify(itemsToPay));
-  localStorage.setItem("checkout_total", totalPrice.value);
-
-  // Chuyển hướng
-  router.push("/thanh-toan");
-};
+const cartItems = ref([]);
+const loading = ref(false);
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-// Tính toán tổng số lượng và tiền
-const selectedItems = computed(() => {
-  return cartByShop.value
-    .flatMap((shop) => shop.items)
-    .filter((i) => i.selected);
-});
+const getImageUrl = (imageName) => {
+  if (!imageName) return aoPhong1;
+  if (imageName.startsWith("http")) return imageName;
+  try {
+    return new URL(`../assets/images/${imageName}`, import.meta.url).href;
+  } catch (e) {
+    return aoPhong1;
+  }
+};
 
-const totalPrice = computed(() => {
-  return selectedItems.value.reduce((sum, i) => sum + i.price * i.quantity, 0);
-});
+const fetchCart = async () => {
+  loading.value = true;
+  try {
+    const res = await hienThiGioHang();
 
+    cartItems.value = res.data.items.map((item) => ({
+      ...item,
+      selected: false,
+    }));
+
+    localStorage.setItem("cartCount", cartItems.value.length);
+    window.dispatchEvent(new Event("update-cart"));
+  } catch (err) {
+    console.error("Lỗi load giỏ hàng:", err);
+  } finally {
+    loading.value = false;
+  }
+};
+const handleUpdateQuantity = async (item, change) => {
+  const newQuantity = item.soLuong + change;
+  if (newQuantity < 0) return;
+
+  try {
+    const res = await updateGioHang({
+      idSanPhamChiTiet: item.idSanPhamChiTiet,
+      soLuong: newQuantity,
+    });
+
+    cartItems.value = res.data.items.map((i) => ({
+      ...i,
+      selected: item.selected, 
+    }));
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const removeItem = async (id) => {
+  if (!confirm("Xóa sản phẩm này?")) return;
+
+  try {
+    const res = await deleteGioHang(id);
+
+   
+    cartItems.value = res.data.items.map((i) => ({
+      ...i,
+      selected: false,
+    }));
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const selectedItems = computed(() => cartItems.value.filter((i) => i.selected));
+const totalPrice = computed(() =>
+  selectedItems.value.reduce((sum, i) => sum + i.gia * i.soLuong, 0),
+);
 const isSelectAll = computed({
-  get: () => {
-    const all = cartByShop.value.flatMap((s) => s.items);
-    return all.length > 0 && all.every((i) => i.selected);
-  },
-  set: (val) => {
-    cartByShop.value.forEach((s) => s.items.forEach((i) => (i.selected = val)));
-  },
+  get: () =>
+    cartItems.value.length > 0 && cartItems.value.every((i) => i.selected),
+  set: (val) => cartItems.value.forEach((i) => (i.selected = val)),
 });
-//////////////// DONE T34 /////////////
-// T35 cập nhất số lượng///
 
-///T36
+const goToCheckout = () => {
+  if (selectedItems.value.length === 0) return alert("Chọn sản phẩm đã nhé!");
+  localStorage.setItem("checkout_items", JSON.stringify(selectedItems.value));
+  localStorage.setItem("checkout_total", totalPrice.value);
+  router.push("/thanh-toan");
+};
 
-///T 39 40 41 42
-/// T47
+onMounted(() => {
+  fetchCart();
+});
 </script>
 
 <template>
-  <div class="shopee-cart">
-    <div class="container">
-      <div class="cart-header shadow-sm">
-        <div class="col-check">
-          <input type="checkbox" v-model="isSelectAll" />
-        </div>
-        <div class="col-product">Sản phẩm</div>
-        <div class="col-unit-price">Đơn giá</div>
-        <div class="col-quantity">Số lượng</div>
-        <div class="col-amount">Số tiền</div>
-        <div class="col-action">Thao tác</div>
+  <div class="cart-page">
+    <div class="container py-5">
+      <div class="header-section text-center mb-5">
+        <span class="eyebrow">Your Selection</span>
+        <h1 class="zen-title">Shopping Bag</h1>
+        <div class="zen-line"></div>
       </div>
 
-      <div
-        v-for="shop in cartByShop"
-        :key="shop.shopName"
-        class="shop-section shadow-sm"
-      >
-        <div class="shop-header">
-          <input type="checkbox" />
-          <span class="shop-label">Yêu thích</span>
-          <span class="shop-name">{{ shop.shopName }}</span>
-          <i class="bi bi-chat-dots text-danger ms-2"></i>
+      <div class="cart-table">
+        <div class="table-head shadow-sm">
+          <div class="c-check">
+            <input type="checkbox" v-model="isSelectAll" class="zen-cb" />
+          </div>
+          <div class="c-info">Sản phẩm</div>
+          <div class="c-price">Đơn giá</div>
+          <div class="c-qty">Số lượng</div>
+          <div class="c-sub">Tổng</div>
+          <div class="c-action"></div>
         </div>
 
-        <div v-for="item in shop.items" :key="item.id" class="product-row">
-          <div class="col-check">
-            <input type="checkbox" v-model="item.selected" />
-          </div>
-          <div class="col-product">
-            <div class="product-content">
-              <img :src="item.image" class="p-img" />
-              <div class="p-details">
-                <p class="p-name">{{ item.name }}</p>
-                <div class="p-variant">
-                  Phân Loại Hàng: <br />
-                  {{ item.variant }} <i class="bi bi-caret-down-fill"></i>
+        <div v-if="cartItems.length > 0" class="table-body">
+          <div
+            v-for="item in cartItems"
+            :key="item.id"
+            class="cart-row shadow-sm"
+          >
+            <div class="c-check">
+              <input type="checkbox" v-model="item.selected" class="zen-cb" />
+            </div>
+            <div class="c-info">
+              <div class="p-card">
+                <img :src="getImageUrl(item.hinhAnh)" class="p-img" />
+                <div class="p-txt">
+                  <p class="p-name">{{ item.tenSanPham }}</p>
+                  <p class="p-var">
+                    {{ item.tenMauSac }} / {{ item.tenKichCo }}
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="col-unit-price">{{ formatPrice(item.price) }}</div>
-          <div class="col-quantity">
-            <div class="q-control">
-              <button @click="item.quantity > 1 && item.quantity--">-</button>
-              <input type="number" v-model="item.quantity" />
-              <button @click="item.quantity++">+</button>
+            <div class="c-price">{{ formatPrice(item.gia) }}</div>
+            <div class="c-qty">
+              <div class="qty-box">
+                <button @click="handleUpdateQuantity(item, -1)">-</button>
+                <input type="number" v-model="item.soLuong" readonly />
+                <button @click="handleUpdateQuantity(item, 1)">+</button>
+              </div>
+            </div>
+            <div class="c-sub fw-bold">
+              {{ formatPrice(item.gia * item.soLuong) }}
+            </div>
+            <div class="c-action">
+              <button class="btn-del"@click="removeItem(item.idSanPhamChiTiet)"">
+                <i class="bi bi-x-lg"></i>
+              </button>
             </div>
           </div>
-          <div class="col-amount text-danger">
-            {{ formatPrice(item.price * item.quantity) }}
-          </div>
-          <div class="col-action">
-            <p class="mb-0 cursor-pointer">Xóa</p>
-            <p class="text-danger mb-0 cursor-pointer small">
-              Tìm sản phẩm tương tự
-            </p>
-          </div>
+        </div>
+
+        <div v-else class="empty-msg text-center py-5">
+          <p class="text-muted">Chưa có món nào trong túi đồ của bạn.</p>
+          <router-link to="/san-pham" class="btn btn-dark btn-shop"
+            >Mua sắm ngay</router-link
+          >
         </div>
       </div>
 
-      <div class="sticky-bottom-bar shadow">
+      <div class="cart-footer shadow-lg">
         <div
           class="container d-flex align-items-center justify-content-between h-100"
         >
-          <div class="d-flex align-items-center gap-3">
-            <input type="checkbox" v-model="isSelectAll" id="sel-all" />
-            <label for="sel-all"
-              >Chọn Tất Cả ({{
-                cartByShop.flatMap((s) => s.items).length
-              }})</label
+          <div class="f-left d-flex align-items-center gap-3">
+            <input
+              type="checkbox"
+              v-model="isSelectAll"
+              id="all-f"
+              class="zen-cb"
+            />
+            <label for="all-f" class="mb-0"
+              >Chọn tất cả ({{ cartItems.length }})</label
             >
-            <span>Xóa</span>
-            <span class="text-danger">Bỏ sản phẩm không hoạt động</span>
           </div>
-
-          <div class="d-flex align-items-center gap-3">
-            <div>
-              Tổng cộng ({{ selectedItems.length }} sản phẩm):
-              <span class="total-text">{{ formatPrice(totalPrice) }}</span>
+          <div class="f-right d-flex align-items-center gap-5">
+            <div class="total-wrap">
+              <span class="t-label">Tổng cộng:</span>
+              <span class="t-amount">{{ formatPrice(totalPrice) }}</span>
             </div>
             <button
               class="btn-checkout"
               :disabled="selectedItems.length === 0"
-              :style="{
-                opacity: selectedItems.length === 0 ? '0.5' : '1',
-                cursor: selectedItems.length === 0 ? 'not-allowed' : 'pointer',
-              }"
               @click="goToCheckout"
             >
-              Mua Hàng
+              Thanh toán
             </button>
           </div>
         </div>
@@ -186,155 +198,179 @@ const isSelectAll = computed({
   </div>
 </template>
 
-<style scoped>
-.shopee-cart {
-  background-color: #f5f5f5;
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap");
+
+.cart-page {
+  background: #fcfcfc;
+  font-family: "Plus Jakarta Sans", sans-serif;
   min-height: 100vh;
-  padding-top: 100px; /* Cách cái navbar mày đã làm */
-  padding-bottom: 120px;
+  padding-top: 60px;
+  color: #1a1a1a;
 }
 
-/* Định nghĩa các cột giống hệt table của shopee */
-.col-check {
-  width: 50px;
-  text-align: center;
+.eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: #999;
 }
-.col-product {
-  flex: 1;
+.zen-title {
+  font-family: "Syncopate", sans-serif;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  margin-top: 10px;
 }
-.col-unit-price {
-  width: 120px;
-  text-align: center;
-}
-.col-quantity {
-  width: 150px;
-  text-align: center;
-}
-.col-amount {
-  width: 120px;
-  text-align: center;
-}
-.col-action {
-  width: 150px;
-  text-align: center;
-  font-size: 14px;
+.zen-line {
+  width: 30px;
+  height: 2px;
+  background: #000;
+  margin: 15px auto;
 }
 
-.cart-header {
-  display: flex;
-  background: white;
-  padding: 15px 0;
-  margin-bottom: 12px;
-  border-radius: 3px;
-  color: #888;
-  font-size: 14px;
-}
-
-.shop-section {
-  background: white;
-  margin-bottom: 15px;
-  border-radius: 3px;
-}
-
-.shop-header {
-  padding: 15px;
-  border-bottom: 1px solid #f2f2f2;
+/* TABLE CSS */
+.table-head,
+.cart-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.shop-label {
-  background: #ee4d2d;
-  color: white;
-  font-size: 10px;
-  padding: 2px 4px;
+  background: #fff;
+  padding: 15px 25px;
   border-radius: 2px;
+  margin-bottom: 12px;
+}
+.table-head {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #aaa;
 }
 
-.product-row {
+.c-check {
+  width: 40px;
+}
+.c-info {
+  flex: 2;
+}
+.c-price,
+.c-qty,
+.c-sub {
+  width: 140px;
+  text-align: center;
+}
+.c-action {
+  width: 60px;
+  text-align: right;
+}
+
+/* PRODUCT CELL */
+.p-card {
   display: flex;
-  padding: 20px 0;
   align-items: center;
-  border-bottom: 1px solid #f2f2f2;
+  gap: 20px;
 }
-
-.product-content {
-  display: flex;
-  gap: 10px;
-}
-
 .p-img {
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 90px;
   object-fit: cover;
+  background: #f5f5f5;
 }
 .p-name {
-  font-size: 14px;
-  line-height: 1.2;
-  margin-bottom: 5px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0;
+  text-transform: uppercase;
 }
-
-.p-variant {
-  font-size: 12px;
+.p-var {
+  font-size: 0.7rem;
   color: #888;
-  cursor: pointer;
+  margin: 0;
 }
 
-/* Control số lượng */
-.q-control {
-  display: flex;
-  justify-content: center;
+/* QTY BOX */
+.qty-box {
+  display: inline-flex;
+  border: 1px solid #eee;
+  border-radius: 2px;
 }
-.q-control button {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #ddd;
-  background: white;
+.qty-box button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: #fff;
+  font-size: 0.8rem;
 }
-.q-control input {
-  width: 45px;
-  height: 32px;
+.qty-box input {
+  width: 40px;
+  border: none;
   text-align: center;
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
-  border-left: none;
-  border-right: none;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-/* Sticky Bar */
-.sticky-bottom-bar {
+/* STICKY FOOTER */
+.cart-footer {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 80px;
-  background: white;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #eee;
   z-index: 1000;
-  border-top: 1px dashed #ddd;
 }
-
-.total-text {
-  color: #ee4d2d;
-  font-size: 24px;
-  font-weight: 500;
-  margin-left: 10px;
+.t-label {
+  font-size: 0.75rem;
+  color: #888;
+  display: block;
+  line-height: 1;
+}
+.t-amount {
+  font-size: 1.6rem;
+  font-weight: 800;
 }
 
 .btn-checkout {
-  background: #ee4d2d;
-  color: white;
+  background: #000;
+  color: #fff;
   border: none;
-  padding: 10px 50px;
-  font-size: 16px;
-  border-radius: 2px;
+  padding: 15px 40px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: 0.3s;
+}
+.btn-checkout:disabled {
+  background: #eee;
+  color: #aaa;
+  cursor: not-allowed;
+}
+.btn-checkout:hover:not(:disabled) {
+  background: #333;
+  transform: translateY(-2px);
 }
 
-.cursor-pointer {
+.zen-cb {
+  accent-color: #000;
+  width: 18px;
+  height: 18px;
   cursor: pointer;
+}
+.btn-del {
+  background: none;
+  border: none;
+  color: #ccc;
+  transition: 0.2s;
+}
+.btn-del:hover {
+  color: #000;
+}
+.btn-shop {
+  padding: 12px 30px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 0;
 }
 </style>

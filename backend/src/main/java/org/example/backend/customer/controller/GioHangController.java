@@ -23,4 +23,20 @@ public class GioHangController {
                 gioHangService.themVaoGio(request)
         );
     }
+
+    @GetMapping("/my-cart")
+    public ResponseEntity<?> getMyCart() {
+        return ResponseEntity.ok(gioHangService.getMyCart());
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<?> updateSoLuong(@RequestBody ThemGioHangRequest request) {
+        return ResponseEntity.ok(gioHangService.updateSoLuong(request));
+    }
+
+    @DeleteMapping("/remove/{idSanPhamChiTiet}")
+    public ResponseEntity<?> removeItem(@PathVariable Long idSanPhamChiTiet) {
+        return ResponseEntity.ok(gioHangService.removeItem(idSanPhamChiTiet));
+    }
+
 }

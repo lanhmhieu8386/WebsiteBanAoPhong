@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -19,14 +20,15 @@ public class GioHangResponse {
     private List<Item> items;
 
     private Integer tongSoLuong;
-    private Double tongTien;
+    private BigDecimal tongTien;
 
     @Data
     public static class Item {
         private Long idSanPhamChiTiet;
         private String tenSanPham;
         private Integer soLuong;
-        private Double gia;
-        private Double thanhTien;
+        private BigDecimal gia;
+        private BigDecimal thanhTien;
+        private String hinhAnh;
     }
 }

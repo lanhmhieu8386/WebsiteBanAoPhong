@@ -1,8 +1,50 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { getThongTin, updateThongTin } from "@/api/customer/thongTinApi";
+import { donHangCuaToi, huyDonHang } from "@/api/customer/hoaDonCustomerApi";
+import { hoaDonChiTiet } from "@/api/customer/hoaDonCustomerApi";
+const activeTab = ref("info"); // info hoặc orders
+import aophong1 from "@/assets/images/aophong1.png";
+import aophong2 from "@/assets/images/aophong2.png";
+///////////////////////// ĐƠN HÀNG
+const orders = ref([]);
+const loadOrders = async () => {
+  try {
+    const res = await donHangCuaToi();
+    orders.value = res.data;
+  } catch (e) {
+    console.error(e);
+  }
+};
 
-const activeTab = ref("info");
+onMounted(() => {
+  loadOrders();
+});
+const images = [aophong1, aophong2];
+
+const getRandomImage = () => {
+  return images[Math.floor(Math.random() * images.length)];
+};
+
+const selectedOrder = ref(null);
+const orderDetails = ref([]);
+const isDrawerOpen = ref(false);
+
+const openDetail = async (order) => {
+  try {
+    const res = await hoaDonChiTiet(order.id);
+    orderDetails.value = res.data.items;
+    selectedOrder.value = order;
+    isDrawerOpen.value = true;
+  } catch (e) {
+    console.error("Error loading details", e);
+    alert("COULD NOT LOAD DETAILS.");
+  }
+};
+
+const closeDrawer = () => {
+  isDrawerOpen.value = false;
+};
 
 const customer = ref({
   tenKhachHang: "",
@@ -10,559 +52,810 @@ const customer = ref({
   email: "",
   ngaySinh: "",
 });
+
 const saveInfo = async () => {
-  const ok = confirm("Bạn có chắc muốn cập nhật thông tin không?");
+  const ok = confirm("CONFIRM UPDATING YOUR PROFILE?");
   if (!ok) return;
 
   try {
     const email = localStorage.getItem("email");
-
     if (!customer.value.tenKhachHang) {
-      alert("Tên không được để trống!");
+      alert("NAME CANNOT BE EMPTY.");
       return;
     }
-
-    const payload = {
-      ...customer.value,
-      ngaySinh: customer.value.ngaySinh,
-    };
-
-    const res = await updateThongTin(payload, email);
-
+    const res = await updateThongTin(customer.value, email);
     customer.value = res.data;
-
-    alert("Cập nhật thành công!");
+    alert("PROFILE UPDATED.");
   } catch (e) {
     console.error(e);
-    alert("Cập nhật thất bại!");
+    alert("UPDATE FAILED.");
   }
 };
 
 onMounted(async () => {
   try {
     const res = await getThongTin();
-    console.log("DATA:", res.data);
-
     customer.value = res.data;
   } catch (e) {
-    console.error("Lỗi load thông tin", e);
+    console.error("Error loading info", e);
   }
 });
 
-const openPasswordModal = () => {
-  alert("tính năng đổi mật khẩu đang được xử lý!");
+const handleCancelOrder = async () => {
+  if (!selectedOrder.value) return;
+
+  const reason = prompt("LÝ DO HỦY ĐƠN HÀNG:");
+  if (reason === null) return; // Nhấn cancel ở prompt
+
+  try {
+    // Gọi API hủy đơn
+    await huyDonHang(selectedOrder.value.id, reason);
+    alert("HỦY ĐƠN HÀNG THÀNH CÔNG.");
+
+    isDrawerOpen.value = false; // Đóng panel
+    loadOrders(); // Load lại danh sách đơn để cập nhật trạng thái mới
+  } catch (e) {
+    console.error(e);
+    alert("HỦY ĐƠN THẤT BẠI. VUI LÒNG THỬ LẠI.");
+  }
 };
 </script>
 
 <template>
-  <div class="profile-page-wrapper">
-    <div class="container">
-      <div class="main-glass-card">
-        <aside class="sidebar-navigation">
-          <div class="user-profile-section">
-            <div class="avatar-container">
-              <div class="avatar-ring"></div>
-              <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                alt="avatar"
-                class="user-avatar"
-              />
-              <button class="mini-upload-btn">
-                <i class="bi bi-camera"></i>
-              </button>
-            </div>
-            <h3 class="user-name-display">
-              {{ customer.tenKhachHang }}
-            </h3>
-            <span class="badge-gold-gradient">Thành viên Gold</span>
+  <div class="studio-profile-wrapper">
+    <div class="bg-blur-element"></div>
+
+    <div class="container py-5">
+      <div class="profile-layout shadow-sm">
+        <aside class="profile-sidebar">
+          <div class="profile-brand">
+            <span class="brand-text">CHIWIWIS</span>
+            <div class="status-indicator"></div>
           </div>
 
-          <nav class="nav-menu">
+          <div class="user-id-card">
+            <div class="avatar-wrapper">
+              <img
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                class="avatar-img"
+              />
+              <button class="avatar-upload-btn">
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
+            <div class="user-meta">
+              <h4 class="user-name">
+                {{ customer.tenKhachHang || "STUDIO USER" }}
+              </h4>
+              <span class="membership-tag">GOLD MEMBER</span>
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
             <button
-              :class="['menu-btn', { active: activeTab === 'info' }]"
+              :class="['nav-link', { active: activeTab === 'info' }]"
               @click="activeTab = 'info'"
             >
-              <i class="bi bi-person-vcard"></i> Hồ sơ cá nhân
+              <span class="nav-num">01</span> THÔNG TIN
             </button>
             <button
-              :class="['menu-btn', { active: activeTab === 'orders' }]"
+              :class="['nav-link', { active: activeTab === 'orders' }]"
               @click="activeTab = 'orders'"
             >
-              <i class="bi bi-box-seam"></i> Lịch sử đơn hàng
+              <span class="nav-num">02</span> LỊCH SỬ
             </button>
-            <div class="nav-divider"></div>
-            <button class="menu-btn security-btn" @click="openPasswordModal">
-              <i class="bi bi-shield-lock"></i> Đổi mật khẩu
+
+            <div class="nav-spacer"></div>
+
+            <button
+              class="nav-link security-link"
+              @click="alert('Feature coming soon')"
+            >
+              <i class="bi bi-shield-lock-fill me-2"></i> BẢO MẬT
             </button>
           </nav>
         </aside>
 
-        <main class="content-viewport">
-          <transition name="page-slide" mode="out-in">
-            <div v-if="activeTab === 'info'" key="info" class="tab-content">
-              <header class="content-header">
-                <h2>Thông tin cá nhân</h2>
-                <p>Quản lý thông tin để bảo mật tài khoản tốt hơn</p>
-              </header>
+        <main class="profile-content">
+          <transition name="fade-slide" mode="out-in">
+            <div v-if="activeTab === 'info'" key="info" class="tab-pane">
+              <div class="pane-header">
+                <h2 class="pane-title">THÔNG TIN CÁ NHÂN</h2>
+                <div class="pane-line"></div>
+              </div>
 
-              <div class="info-bento-grid">
-                <div class="input-card shadow-soft">
-                  <label class="label-bold">Họ và tên</label>
+              <div class="bento-grid-2026">
+                <div class="bento-item span-2">
+                  <label class="studio-label">HỌ TÊN</label>
                   <input
                     type="text"
                     v-model="customer.tenKhachHang"
-                    class="modern-input"
+                    class="studio-input"
+                    placeholder="ENTER NAME..."
                   />
+                  <div class="input-focus-line"></div>
                 </div>
 
-                <div class="input-card shadow-soft">
-                  <label class="label-bold">Số điện thoại</label>
+                <div class="bento-item">
+                  <label class="studio-label">SỐ ĐIỆN THOẠI</label>
                   <input
                     type="tel"
                     v-model="customer.soDienThoai"
-                    class="modern-input"
+                    class="studio-input"
+                    placeholder="+84 ..."
                   />
+                  <div class="input-focus-line"></div>
                 </div>
 
-                <div class="input-card shadow-soft">
+                <div class="bento-item">
+                  <label class="studio-label">EMAIL </label>
                   <input
                     type="email"
                     v-model="customer.email"
-                    class="modern-input"
+                    class="studio-input readonly"
+                    readonly
                   />
                 </div>
 
-                <div class="input-card shadow-soft">
-                  <label class="label-bold">Ngày sinh</label>
+                <div class="bento-item">
+                  <label class="studio-label">NGÀY SINH</label>
                   <input
                     type="date"
                     :value="customer.ngaySinh?.substring(0, 10)"
-                    class="modern-input"
+                    class="studio-input"
                   />
+                  <div class="input-focus-line"></div>
+                </div>
+
+                <div class="bento-item empty-bento">
+                  <div class="studio-watermark">CWW</div>
                 </div>
               </div>
 
-              <div class="action-footer">
-                <span class="save-action" @click="saveInfo">
-                  <i class="bi bi-check2-circle"></i>
-                  Lưu thay đổi
-                </span>
+              <div class="pane-footer">
+                <button class="btn-save-studio" @click="saveInfo">
+                  LƯU
+                  <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+              </div>
+            </div>
+
+            <div
+              v-else-if="activeTab === 'orders'"
+              key="orders"
+              class="tab-pane"
+            >
+              <div class="pane-header">
+                <h2 class="pane-title">LỊCH SỬ MUA SẮM</h2>
+                <div class="pane-line"></div>
+              </div>
+
+              <div class="order-list-container">
+                <div class="order-table-header d-none d-md-grid">
+                  <div class="header-item">MÃ ĐƠN HÀNG</div>
+                  <div class="header-item">NGÀY ĐẶT</div>
+                  <div class="header-item">TRẠNG THÁI</div>
+                  <div class="header-item text-end">TỔNG TIỀN</div>
+                </div>
+
+                <div class="order-items-scroll">
+                  <div
+                    v-for="item in orders"
+                    :key="item.id"
+                    class="order-row-studio"
+                  >
+                    <div class="order-id">
+                      <span class="mobile-label d-md-none">ID:</span>
+                      #CWW-2026-00{{ item.maHoaDon }}
+                    </div>
+                    <div class="order-date">
+                      <span class="mobile-label d-md-none">DATE:</span>
+                      12/04/2026
+                    </div>
+                    <div class="order-status">
+                      <span
+                        class="status-badge"
+                        :class="
+                          item.trangThai === 1 ? 'processing' : 'completed'
+                        "
+                      >
+                        {{ item.trangThai === 1 ? "CHỜ XÁC NHẬN" : "DONE" }}
+                      </span>
+                    </div>
+
+                    <div class="order-total-price text-md-end">
+                      {{
+                        new Intl.NumberFormat("vi-VN").format(item.tongTien)
+                      }}₫
+                    </div>
+                    <div class="order-action">
+                      <button
+                        class="btn-detail-minimal"
+                        @click="openDetail(item)"
+                      >
+                        CHI TIẾT
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </transition>
         </main>
       </div>
     </div>
+    <div
+      :class="['studio-drawer-overlay', { active: isDrawerOpen }]"
+      @click="closeDrawer"
+    ></div>
+    <aside :class="['studio-drawer', { open: isDrawerOpen }]">
+      <div class="drawer-header">
+        <button class="btn-close-drawer" @click="closeDrawer">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <h3 class="drawer-title">ORDER DETAILS</h3>
+        <p class="drawer-subtitle" v-if="selectedOrder">
+          #{{ selectedOrder.maHoaDon }}
+        </p>
+      </div>
+
+      <div class="drawer-content">
+        <div v-if="orderDetails.length > 0">
+          <div
+            v-for="detail in orderDetails"
+            :key="detail.idSanPhamChiTiet"
+            class="detail-item"
+          >
+            <div class="detail-img-box">
+              <img :src="detail.hinhAnh || getRandomImage()" alt="product" />
+            </div>
+
+            <div class="detail-info">
+              <p class="prod-name">{{ detail.tenSanPham }}</p>
+
+              <p class="prod-meta">Số lượng: {{ detail.soLuong }}</p>
+            </div>
+
+            <div class="detail-price">
+              {{ new Intl.NumberFormat("vi-VN").format(detail.thanhTien) }}₫
+            </div>
+          </div>
+          <div class="drawer-summary">
+            <div class="summary-line">
+              <span>TẠM TÍNH</span>
+              <span
+                >{{
+                  new Intl.NumberFormat("vi-VN").format(
+                    selectedOrder?.tongTien,
+                  )
+                }}₫</span
+              >
+            </div>
+            <div class="summary-line total">
+              <span>TỔNG TIỀN</span>
+              <span
+                >{{
+                  new Intl.NumberFormat("vi-VN").format(
+                    selectedOrder?.tongTien,
+                  )
+                }}₫</span
+              >
+            </div>
+            <button
+              v-if="selectedOrder?.trangThai === 1"
+              class="btn-cancel-order"
+              @click="handleCancelOrder"
+            >
+              HỦY ĐƠN HÀNG
+            </button>
+          </div>
+        </div>
+        <div v-else class="text-center py-5">LOADING...</div>
+      </div>
+    </aside>
   </div>
 </template>
 
 <style scoped>
-/* layout tổng thể */
-.action-footer {
-  margin-top: 30px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.save-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #64748b;
-  cursor: pointer;
-  transition: 0.25s;
-  font-size: 14px;
-}
-
-.save-action i {
-  font-size: 18px;
-}
-
-.save-action:hover {
-  color: #dc3545;
-  transform: translateX(4px);
-}
-
-/* nâng cấp style giới tính */
-.gender-selection {
-  display: flex;
-  gap: 10px;
-  margin-top: 5px;
-}
-
-.gender-option {
-  cursor: pointer;
-  flex: 1;
-}
-
-.gender-option input {
-  display: none;
-}
-
-.gender-label {
-  display: block;
-  text-align: center;
-  padding: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 600;
-  transition: 0.25s;
-  color: #64748b;
-}
-
-.gender-option:hover .gender-label {
-  background: #f1f5f9;
-}
-
-.gender-option input:checked + .gender-label {
-  background: #fff;
-  border: 1px solid #dc3545;
-  color: #dc3545;
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.1);
-}
-
-.gender-option input:checked + .gender-label {
-  background: #2e976d;
-  color: white;
-  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
-}
-
-/* nâng cấp các nút bấm chính */
-.btn-primary-2026 {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  color: white;
-  padding: 16px 45px;
-  border-radius: 18px;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  margin-top: 30px;
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary-2026:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px rgba(30, 41, 59, 0.2);
-  background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
-}
-
-.btn-primary-2026:active {
-  transform: translateY(0);
-}
-
-/* nút upload nhỏ ở avatar */
-.mini-upload-btn {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 36px;
-  height: 36px;
-  background: white;
-  color: #1e293b;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+@import url("https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap");
+.btn-cancel-order {
+  width: 100%;
+  margin-top: 25px;
+  background: none;
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  padding: 15px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 2px;
   transition: 0.3s;
+  cursor: pointer;
 }
 
-.mini-upload-btn:hover {
-  background: #1e293b;
-  color: white;
-  transform: rotate(90deg);
+.btn-cancel-order:hover {
+  background: #ff4444;
+  color: #fff;
+  box-shadow: 0 5px 15px rgba(255, 68, 68, 0.2);
+}
+/* DRAWER SYSTEM */
+.studio-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.4s;
+}
+.studio-drawer-overlay.active {
+  opacity: 1;
+  visibility: visible;
 }
 
-/* menu button bên trái */
-.menu-btn {
-  border: 1px solid transparent;
+.studio-drawer {
+  position: fixed;
+  top: 0;
+  right: -500px;
+  width: 450px;
+  height: 100%;
+  background: #fff;
+  z-index: 1001;
+  transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 40px;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+.studio-drawer.open {
+  right: 0;
+}
+.detail-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* hoặc contain nếu muốn thấy full ảnh */
+  display: block;
 }
 
-.menu-btn.active {
-  background: white;
-  color: #dc3545;
-  box-shadow: 0 10px 25px rgba(220, 53, 69, 0.1);
-  border: 1px solid rgba(220, 53, 69, 0.05);
+.btn-close-drawer {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  padding: 0;
+  margin-bottom: 30px;
+  cursor: pointer;
 }
 
-.security-btn {
-  background: rgba(239, 68, 68, 0.05);
+.drawer-title {
+  font-family: "Syncopate", sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
 }
-
-.security-btn:hover {
-  background: #ef4444 !important;
-  color: white !important;
-}
-
-.profile-page-wrapper {
-  min-height: 100vh;
-  padding: 80px 0;
-  background: #f8fafc;
-  background-image:
-    radial-gradient(at 0% 0%, rgba(220, 53, 69, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(220, 53, 69, 0.05) 0px, transparent 50%);
-  font-family: "inter", sans-serif;
-  color: #1e293b;
-}
-
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-/* khung kính mờ light mode */
-.main-glass-card {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(15px);
-  border: 1px solid #ffffff;
-  border-radius: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  min-height: 600px;
-}
-
-/* sidebar */
-.sidebar-navigation {
-  background: rgba(255, 255, 255, 0.4);
-  padding: 40px 20px;
-  border-right: 1px solid #f1f5f9;
-}
-
-.user-profile-section {
-  text-align: center;
+.drawer-subtitle {
+  font-size: 0.7rem;
+  color: #888;
+  font-weight: 800;
   margin-bottom: 40px;
 }
 
-.avatar-container {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 15px;
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.detail-img-box {
+  width: 60px;
+  height: 60px;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+}
+.prod-name {
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.prod-meta {
+  font-size: 0.7rem;
+  color: #999;
+  font-weight: 600;
+}
+.detail-price {
+  margin-left: auto;
+  font-family: "Syncopate", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
-.user-avatar {
+.drawer-summary {
+  margin-top: auto;
+  padding-top: 30px;
+}
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.summary-line.total {
+  border-top: 2px solid #000;
+  padding-top: 20px;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+@media (max-width: 576px) {
+  .studio-drawer {
+    width: 100%;
+    right: -100%;
+  }
+}
+.studio-profile-wrapper {
+  background: #fcfcfc;
+  min-height: 100vh;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-blur-element {
+  position: absolute;
+  top: -10%;
+  right: -5%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.02) 0%, transparent 70%);
+  z-index: 0;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  background: #fff;
+  border: 1px solid #000;
+  min-height: 750px;
+  position: relative;
+  z-index: 1;
+}
+
+/* SIDEBAR */
+.profile-sidebar {
+  background: #464242;
+  color: #fff;
+  padding: 50px 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 60px;
+}
+
+.brand-text {
+  font-family: "Syncopate", sans-serif;
+  letter-spacing: 4px;
+  font-size: 0.8rem;
+}
+
+.status-indicator {
+  width: 6px;
+  height: 6px;
+  background: #00ff88;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00ff88;
+}
+
+.user-id-card {
+  margin-bottom: 50px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+}
+
+.avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 30px;
   object-fit: cover;
-  border: 4px solid white;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #333;
+  padding: 5px;
 }
 
-.mini-upload-btn {
+.avatar-upload-btn {
   position: absolute;
   bottom: -5px;
   right: -5px;
-  width: 32px;
-  height: 32px;
-  background: #1e293b;
-  color: white;
+  background: #fff;
+  color: #000;
   border: none;
-  border-radius: 10px;
-  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.user-name-display {
-  font-weight: 700;
-  font-size: 1.1rem;
+.user-name {
+  font-family: "Syncopate", sans-serif;
+  font-size: 0.85rem;
   margin-bottom: 5px;
+  text-transform: uppercase;
 }
 
-.badge-gold-gradient {
-  background: linear-gradient(90deg, #b8860b, #daa520);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 11px;
+.membership-tag {
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: #888;
   font-weight: 800;
-  letter-spacing: 1px;
 }
 
-/* menu điều hướng */
-.nav-menu {
+/* NAVIGATION */
+.sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
+  flex-grow: 1;
 }
 
-.menu-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
+.nav-link {
+  background: none;
   border: none;
-  background: transparent;
-  border-radius: 18px;
-  color: #64748b;
-  font-weight: 500;
-  transition: 0.25s;
-  cursor: pointer;
+  color: #666;
   text-align: left;
-}
-
-.menu-btn.active {
-  background: white;
-  color: #dc3545;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.menu-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.5);
-  transform: translateX(5px);
-}
-
-.security-btn {
-  color: #ef4444;
-}
-
-.nav-divider {
-  height: 1px;
-  background: #f1f5f9;
-  margin: 10px 20px;
-}
-
-/* vùng nội dung chính */
-.content-viewport {
-  padding: 50px;
-  background: white;
-}
-
-.content-header {
-  margin-bottom: 35px;
-}
-
-.content-header h2 {
-  font-size: 24px;
+  padding: 18px 0;
+  font-size: 0.7rem;
   font-weight: 800;
+  letter-spacing: 2px;
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 }
 
-.content-header p {
-  color: #94a3b8;
-  font-size: 14px;
+.nav-num {
+  margin-right: 15px;
+  color: #e52626;
+  font-family: "Syncopate", sans-serif;
+  font-size: 0.65rem;
 }
 
-/* grid thông tin cá nhân */
-.info-bento-grid {
+.nav-link.active {
+  color: #fff;
+}
+.nav-link:hover:not(.active) {
+  color: #fff;
+  padding-left: 10px;
+}
+
+.nav-spacer {
+  flex-grow: 1;
+}
+
+.security-link {
+  border-top: 1px solid #222;
+  padding-top: 25px;
+  color: #ff4444;
+}
+
+/* MAIN CONTENT */
+.profile-content {
+  padding: 60px;
+  background: #fff;
+}
+
+.pane-header {
+  margin-bottom: 50px;
+}
+.pane-title {
+  font-family: "Syncopate", sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 4px;
+  margin-bottom: 15px;
+}
+.pane-line {
+  width: 35px;
+  height: 3px;
+  background: #000;
+}
+
+/* BENTO GRID */
+.bento-grid-2026 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 40px;
 }
-
-.input-card {
-  background: #fbfcfd;
-  padding: 15px 20px;
-  border-radius: 20px;
-  border: 1px solid #f1f5f9;
-}
-
-.full-width {
+.span-2 {
   grid-column: span 2;
 }
-
-.label-bold {
-  font-weight: 900;
-  font-size: 11px;
-  color: #1a1a1a;
-  margin-bottom: 5px;
-  display: block;
+.bento-item {
+  position: relative;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 5px;
 }
-
-.modern-input {
+.studio-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #000;
+  margin-bottom: 12px;
+}
+.studio-input {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 8px 0;
-  font-size: 15px;
-  color: #334155;
-  outline: none;
-}
-
-/* nút bấm chính */
-.btn-primary-2026 {
-  background: #1e293b;
-  color: white;
-  padding: 16px 40px;
-  border-radius: 20px;
-  border: none;
+  font-size: 0.95rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s;
-  margin-top: 30px;
+  padding: 10px 0;
+  outline: none;
+  color: #1a1a1a;
 }
-
-.btn-primary-2026:hover {
-  background: #dc3545;
-  box-shadow: 0 10px 20px rgba(220, 53, 69, 0.2);
+.readonly {
+  color: #bbb;
+  cursor: not-allowed;
 }
-
-/* đơn hàng */
-.order-glass-item {
+.input-focus-line {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: #000;
+  transition: 0.4s ease;
+}
+.studio-input:focus ~ .input-focus-line {
+  width: 100%;
+}
+.empty-bento {
+  border: 1px dashed #eee;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px;
-  background: #fbfcfd;
-  border: 1px solid #f1f5f9;
-  border-radius: 24px;
-  margin-bottom: 15px;
+  justify-content: center;
+  padding-bottom: 0;
+  min-height: 80px;
+}
+.studio-watermark {
+  font-family: "Syncopate", sans-serif;
+  font-size: 1.8rem;
+  color: #fafafa;
+  user-select: none;
 }
 
-.order-id-tag {
-  font-weight: 700;
-  color: #1e293b;
+/* ORDER HISTORY SPECIFIC */
+.order-table-header {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 0.5fr;
+  padding: 15px 0;
+  border-bottom: 2px solid #000;
+  margin-bottom: 10px;
 }
-
-.status-dot-active {
-  background: #ecfdf5;
-  color: #059669;
-  padding: 4px 12px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 10px;
-}
-
-.order-total {
+.header-item {
+  font-size: 0.65rem;
   font-weight: 800;
-  color: #dc3545;
-  font-size: 18px;
+  letter-spacing: 2px;
+  color: #000;
+}
+.order-row-studio {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 0.5fr;
+  padding: 25px 0;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+  transition: 0.3s;
+}
+.order-row-studio:hover {
+  background: #fafafa;
+}
+.order-id {
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+.order-date {
+  font-size: 0.8rem;
+  color: #888;
+}
+.status-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  letter-spacing: 1px;
+  display: inline-block;
+}
+.status-badge.processing {
+  background: #fff4e5;
+  color: #d4a017;
+}
+.status-badge.completed {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+.order-total-price {
+  font-family: "Syncopate", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.btn-detail-minimal {
+  background: none;
+  border: none;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
 }
 
-.btn-icon-only {
-  background: white;
-  border: 1px solid #f1f5f9;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+/* FOOTER */
+.pane-footer {
+  margin-top: 60px;
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-save-studio {
+  background: #5c5151;
+  color: #fff;
+  border: none;
+  padding: 20px 45px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  transition: 0.3s;
   cursor: pointer;
 }
-
-/* hiệu ứng chuyển trang mượt */
-.page-slide-enter-active,
-.page-slide-leave-active {
-  transition: all 0.3s ease;
+.btn-save-studio:hover {
+  background: #8a5c5c;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.page-slide-enter-from {
+/* TRANSITIONS */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: 0.4s;
+}
+.fade-slide-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(15px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
 }
 
-.page-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
+@media (max-width: 992px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+  .profile-sidebar {
+    padding: 40px;
+    min-height: auto;
+  }
+  .profile-content {
+    padding: 40px 25px;
+  }
+  .order-row-studio {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    border: 1px solid #eee;
+    padding: 20px;
+    margin-bottom: 15px;
+  }
+  .mobile-label {
+    font-weight: 800;
+    font-size: 0.65rem;
+    margin-right: 5px;
+    color: #999;
+  }
 }
 </style>

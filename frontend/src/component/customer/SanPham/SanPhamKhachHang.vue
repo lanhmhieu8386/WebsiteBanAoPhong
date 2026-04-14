@@ -1,26 +1,38 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import {
   getAllSanPham,
   getSanPhamByDanhMuc,
   detailSanPham,
 } from "@/api/sanpham/sanPhamApi";
 import { getAllDanhMuc } from "@/api/danhmuc/danhMucApi";
-import aoPhong1 from "@/assets/images/aophong1.jpg";
-import aoPhong2 from "@/assets/images/aophong2.jpg";
-import aoPhong3 from "@/assets/images/aophong3.jpg";
-import aoPhong4 from "@/assets/images/aophong4.jpg";
-import aoPhong5 from "@/assets/images/aophong5.jpg";
-import aoPhong6 from "@/assets/images/aophong6.jpg";
-
-/////////////////API //////////////
 import { addGioHang } from "@/api/customer/gioHangApi";
 
-///////////////// GIO HANG /////////////////
-const handleAddToCart = async (item) => {
+import aophong1 from "@/assets/images/aophong1.png";
+import aophong2 from "@/assets/images/aophong2.png";
+const fallbackImages = [aophong1, aophong2];
+
+const getRandomImage = () => {
+  const index = Math.floor(Math.random() * fallbackImages.length);
+  return fallbackImages[index];
+};
+// ================== STATE ==================
+const lstDanhMuc = ref([]);
+const danhMucDangChon = ref(null);
+const sanPhamList = ref([]);
+const selectedProduct = ref(null);
+const showModal = ref(false);
+const currentPage = ref(1);
+const itemsPerPage = 9; // Tăng lên 9 cho cân grid
+
+// ================== GIO HANG ==================
+const handleAddToCart = async (product) => {
   try {
+    // Nếu có biến thể thì lấy id biến thể đầu tiên, nếu không lấy id sản phẩm
+    const targetId = product.chiTietList?.[0]?.id || product.id;
     await addGioHang({
-      idSanPhamChiTiet: item.id,
+      idSanPhamChiTiet: targetId,
       soLuong: 1,
     });
 
@@ -28,36 +40,23 @@ const handleAddToCart = async (item) => {
     count += 1;
     localStorage.setItem("cartCount", count);
     window.dispatchEvent(new Event("update-cart"));
-    alert("✅ Đã thêm vào giỏ");
+
+    // Toast xịn thay cho alert
+    alert("✅ Added to your collection");
   } catch (err) {
     console.error(err);
   }
 };
 
-const localImages = [
-  aoPhong1,
-  aoPhong2,
-  aoPhong3,
-  aoPhong4,
-  aoPhong5,
-  aoPhong6,
-];
-const getRandomImage = (index) => {
-  return localImages[index % localImages.length];
-};
-const lstDanhMuc = ref([]);
-const danhMucDangChon = ref(null);
-const sanPhamList = ref([]);
-
-// ================== LOAD ==================
+// ================== LOAD DATA ==================
 const loadDanhMuc = async () => {
   try {
     const res = await getAllDanhMuc();
     lstDanhMuc.value = res.data;
-
     if (lstDanhMuc.value.length > 0) {
-      danhMucDangChon.value = lstDanhMuc.value[0];
-      loadSanPhamByDanhMuc(danhMucDangChon.value.id);
+      // Mặc định không chọn cái nào để hiện "All" hoặc chọn cái đầu tiên tùy mày
+      // Ở đây tao để mặc định load tất cả
+      loadSanPham();
     }
   } catch (e) {
     console.error("Lỗi load danh mục", e);
@@ -67,31 +66,24 @@ const loadDanhMuc = async () => {
 const loadSanPham = async () => {
   try {
     const res = await getAllSanPham();
+    console.log("DATA SAN PHAM:", res.data);
     sanPhamList.value = res.data;
+    danhMucDangChon.value = null;
   } catch (e) {
     console.error("Lỗi load sản phẩm", e);
   }
 };
 
-const loadSanPhamByDanhMuc = async (id) => {
+const loadSanPhamByDanhMuc = async (dm) => {
   try {
-    const res = await getSanPhamByDanhMuc(id);
+    danhMucDangChon.value = dm;
+    const res = await getSanPhamByDanhMuc(dm.id);
     sanPhamList.value = res.data;
     currentPage.value = 1;
   } catch (e) {
     console.error("Lỗi lọc sản phẩm", e);
   }
 };
-
-// ================== CHỌN DANH MỤC ==================
-const chonDanhMuc = (dm) => {
-  danhMucDangChon.value = dm;
-  loadSanPhamByDanhMuc(dm.id);
-};
-
-// ================== MODAL ==================
-const selectedProduct = ref(null);
-const showModal = ref(false);
 
 const goChiTiet = async (id) => {
   try {
@@ -104,326 +96,463 @@ const goChiTiet = async (id) => {
 };
 
 // ================== PAGINATION ==================
-const currentPage = ref(1);
-const itemsPerPage = 6;
-
 const paginatedSanPham = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   return sanPhamList.value.slice(start, start + itemsPerPage);
 });
 
-const totalPages = computed(() => {
-  return Math.ceil(sanPhamList.value.length / itemsPerPage);
-});
+const totalPages = computed(() =>
+  Math.ceil(sanPhamList.value.length / itemsPerPage),
+);
 
-// ================== INIT ==================
 onMounted(() => {
   loadDanhMuc();
+  // Khởi tạo animation reveal
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) entry.target.classList.add("active");
+      });
+    },
+    { threshold: 0.1 },
+  );
+  document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
 });
 </script>
 
 <template>
-  <main class="home-body pt-5">
-    <header class="text-center mb-5 reveal">
-      <h2 class="section-title">Bộ Sưu Tập Áo Phông</h2>
-      <div class="luxury-line"></div>
-    </header>
+  <main class="shop-page">
+    <section class="shop-header reveal">
+      <div class="container text-center">
+        <span class="eyebrow">Curated Collection</span>
+        <h1 class="zen-title">SẢN PHẨM</h1>
+        <div class="zen-line"></div>
+      </div>
+    </section>
 
-    <section class="py-5 container">
-      <div class="row g-4">
-        <!-- SIDEBAR -->
-        <aside class="col-lg-3 reveal-left">
-          <div
-            class="sidebar-container p-2 shadow-sm border rounded-4 bg-white sticky-top"
-            style="top: 100px"
-          >
-            <div class="sidebar-header text-center py-3 mb-2 border-bottom">
-              <h5 class="section-title" style="font-size: 1.2rem">DANH MỤC</h5>
+    <section class="container py-5">
+      <div class="row g-5">
+        <aside class="col-lg-3">
+          <div class="filter-sidebar sticky-top" style="top: 120px">
+            <div class="filter-group">
+              <h5 class="filter-label">Danh mục</h5>
+              <ul class="filter-list">
+                <li :class="{ active: !danhMucDangChon }" @click="loadSanPham">
+                  Tất cả sản phẩm
+                </li>
+                <li
+                  v-for="dm in lstDanhMuc"
+                  :key="dm.id"
+                  :class="{ active: danhMucDangChon?.id === dm.id }"
+                  @click="loadSanPhamByDanhMuc(dm)"
+                >
+                  {{ dm.tenDanhMuc }}
+                </li>
+              </ul>
             </div>
 
-            <div class="category-list">
-              <div
-                v-for="dm in lstDanhMuc"
-                :key="dm.id"
-                class="category-item-sidebar p-3 mb-1 rounded-3 fw-bold"
-                :class="{ active: danhMucDangChon?.id === dm.id }"
-                @click="chonDanhMuc(dm)"
-              >
-                {{ dm.tenDanhMuc }}
-              </div>
+            <div class="promo-box mt-5">
+              <span class="small-text">Khuyến mại mới</span>
+              <h6>Giảm tới 20%</h6>
+              <p>For inner circle members only.</p>
             </div>
           </div>
         </aside>
 
-        <!-- PRODUCTS -->
         <div class="col-lg-9">
           <div
-            class="reveal-right d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom"
-          ></div>
+            class="grid-controls d-flex justify-content-between align-items-center mb-4"
+          >
+            <span class="results-count">{{ sanPhamList.length }} sản phẩm</span>
+          </div>
 
           <div class="row g-4">
             <div
               class="col-6 col-md-4"
-              v-for="(item, index) in paginatedSanPham"
+              v-for="item in paginatedSanPham"
               :key="item.id"
             >
-              <div
-                class="product-card p-3 border rounded-4 h-100 d-flex flex-column"
-              >
-                <img
-                  :src="item.hinhAnh ? item.hinhAnh : getRandomImage(index)"
-                  class="product-img hover-zoom"
-                  :alt="item.tenSanPham"
-                />
-                <h5 class="product-title text-uppercase">
-                  {{ item.tenSanPham }}
-                </h5>
-
-                <p class="product-price text-danger fw-bold mt-auto">
-                  {{ item.giaMin.toLocaleString() }}đ
-                </p>
-
-                <button
-                  class="btn btn-sm btn-add rounded-3"
-                  @click="handleAddToCart(item)"
-                >
-                  MUA NGAY
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-secondary rounded-3 mt-2"
-                  @click="goChiTiet(item.id)"
-                >
-                  Chi tiết
-                </button>
+              <div class="zen-product-card">
+                <div class="product-visual">
+                  <img
+                    :src="item.hinhAnh ? item.hinhAnh : getRandomImage()"
+                    class="product-img"
+                    alt=""
+                  />
+                  <div class="product-actions">
+                    <button class="action-btn" @click="goChiTiet(item.id)">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="action-btn" @click="handleAddToCart(item)">
+                      <i class="bi bi-bag"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-name">{{ item.tenSanPham }}</h3>
+                  <p class="product-price">
+                    {{ item.giaMin.toLocaleString() }}đ
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- PAGINATION -->
-          <div class="d-flex justify-content-center mt-5">
-            <ul class="pagination-custom d-flex gap-2 list-unstyled">
-              <li>
-                <button
-                  class="page-link-custom"
-                  @click="currentPage--"
-                  :disabled="currentPage === 1"
-                >
-                  ‹
-                </button>
-              </li>
-
-              <li
-                v-for="page in totalPages"
-                :key="page"
-                :class="{ active: page === currentPage }"
-              >
-                <button class="page-link-custom" @click="currentPage = page">
-                  {{ page }}
-                </button>
-              </li>
-
-              <li>
-                <button
-                  class="page-link-custom"
-                  @click="currentPage++"
-                  :disabled="currentPage === totalPages"
-                >
-                  ›
-                </button>
-              </li>
-            </ul>
+          <div class="zen-pagination mt-5">
+            <button
+              class="page-arrow"
+              :disabled="currentPage === 1"
+              @click="currentPage--"
+            >
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span
+              v-for="page in totalPages"
+              :key="page"
+              class="page-num"
+              :class="{ active: page === currentPage }"
+              @click="currentPage = page"
+            >
+              {{ page }}
+            </span>
+            <button
+              class="page-arrow"
+              :disabled="currentPage === totalPages"
+              @click="currentPage++"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
       </div>
     </section>
-  </main>
-  <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-    <div class="modal-box modern">
-      <button class="btn-close" @click="showModal = false">×</button>
-      <img :src="selectedProduct.hinhAnh || aoPhong1" class="modal-img" />
-      <div v-if="selectedProduct">
-        <h3 class="fw-bold text-danger">
-          {{ selectedProduct.tenSanPham }}
-        </h3>
 
-        <p class="text-muted">
-          {{ selectedProduct.moTa }}
-        </p>
+    <div
+      v-if="showModal"
+      class="zen-modal-overlay"
+      @click.self="showModal = false"
+    >
+      <div class="zen-modal-box">
+        <button class="zen-close" @click="showModal = false">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <div v-if="selectedProduct" class="zen-modal-grid">
+          <div class="modal-gallery">
+            <img :src="selectedProduct.hinhAnh || aoPhong1" class="img-fluid" />
+          </div>
+          <div class="modal-details">
+            <span class="modal-cat">{{ selectedProduct.tenDanhMuc }}</span>
+            <h2 class="modal-title">{{ selectedProduct.tenSanPham }}</h2>
+            <p class="modal-desc">{{ selectedProduct.moTa }}</p>
+            <div class="modal-price">
+              <p class="product-price">
+                {{ item.giaMin ? item.giaMin.toLocaleString() : "0" }}đ
+              </p>
+            </div>
 
-        <h4 class="text-danger">{{ selectedProduct.giaMin }}đ</h4>
+            <div class="variant-selector mt-4">
+              <p class="small-label">Select Options</p>
+              <div class="variant-scroll">
+                <div
+                  v-for="ct in selectedProduct.chiTietList"
+                  :key="ct.id"
+                  class="v-card-shop"
+                  @click="handleAddToCart(selectedProduct)"
+                >
+                  <div class="v-info">
+                    <span class="fw-bold"
+                      >{{ ct.tenMauSac }} / {{ ct.tenKichCo }}</span
+                    >
+                    <span class="d-block small text-muted"
+                      >Stock: {{ ct.soLuong }}</span
+                    >
+                  </div>
+                  <span class="v-price">{{ ct.gia.toLocaleString() }}đ</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              class="btn-zen-primary w-100 mt-4"
+              @click="handleAddToCart(selectedProduct)"
+            >
+              Quick Purchase
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>
-.modal-box.modern {
-  width: 900px;
-  max-width: 95%;
-  border-radius: 20px;
+@import url("https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Plus+Jakarta+Sans:wght@200;400;500;600;700&display=swap");
+
+.shop-page {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background: #fff;
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+/* --- HEADER --- */
+.shop-header {
+  padding: 120px 0 60px;
+  background: #fcfcfc;
+}
+.eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  color: #aaa;
+  display: block;
+  margin-bottom: 15px;
+}
+.zen-title {
+  font-family: "Syncopate", sans-serif;
+  font-size: 2.5rem;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+}
+.zen-line {
+  width: 40px;
+  height: 2px;
+  background: #000;
+  margin: 20px auto;
+}
+
+/* --- SIDEBAR --- */
+.filter-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+.filter-list {
+  list-style: none;
   padding: 0;
+}
+.filter-list li {
+  padding: 12px 0;
+  font-size: 0.9rem;
+  color: #888;
+  cursor: pointer;
+  transition: 0.3s;
+  border-bottom: 1px solid #f5f5f5;
+}
+.filter-list li:hover,
+.filter-list li.active {
+  color: #000;
+  padding-left: 10px;
+}
+.filter-list li.active {
+  font-weight: 700;
+  border-bottom-color: #000;
+}
+
+.promo-box {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 30px;
+  border-radius: 4px;
+}
+.promo-box h6 {
+  font-family: "Syncopate", sans-serif;
+  font-size: 1rem;
+  margin: 10px 0;
+}
+.promo-box p {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* --- PRODUCT CARD (LUXURY VERSION) --- */
+.zen-product-card {
+  position: relative;
+  transition: 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.product-visual {
+  position: relative;
+  border-radius: 4px;
   overflow: hidden;
+  background: #f9f9f9;
+  aspect-ratio: 3/4;
 }
-
-/* GRID */
-.modal-content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-}
-
-/* LEFT */
-.modal-left {
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-img {
+.product-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.zen-product-card:hover .product-img {
+  transform: scale(1.08);
 }
 
-/* RIGHT */
-.modal-right {
-  padding: 24px;
-}
-
-.meta {
+.product-actions {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
-  color: #666;
+  gap: 10px;
+  opacity: 0;
+  transition: 0.4s;
 }
-
-.price {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: #dc3545;
+.zen-product-card:hover .product-actions {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
-
-/* VARIANT */
-.variant-list {
-  margin-top: 16px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.variant-card {
+.action-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  margin-bottom: 8px;
-  transition: 0.25s;
+  justify-content: center;
+  transition: 0.3s;
+}
+.action-btn:hover {
+  background: #000;
+  color: #fff;
 }
 
-.variant-card:hover {
-  background: #fff5f5;
-  border-color: #dc3545;
-  transform: scale(1.02);
+.product-info {
+  padding: 20px 0;
+  text-align: left;
+}
+.product-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #555;
+}
+.product-price {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000;
+  margin-top: 5px;
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
-  .modal-content-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-box.modern {
-    width: 95%;
-  }
-}
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+/* --- PAGINATION --- */
+.zen-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  gap: 15px;
 }
-
-.modal-box {
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  width: 500px;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
-}
-
-.btn-close {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  border: none;
-  background: none;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.variant-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
-/* giữ nguyên style cũ của ca ca */
-.home-body {
-  background: linear-gradient(180deg, #fff, #fff6f6);
-}
-
-.section-title {
-  font-weight: 800;
-  background: linear-gradient(45deg, #b80000, #ff3c3c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.category-item-sidebar {
-  cursor: pointer;
-  transition: 0.3s;
-}
-.category-item-sidebar:hover {
-  background: #fff5f5;
-  color: #dc3545;
-}
-.category-item-sidebar.active {
-  background: linear-gradient(45deg, #b80000, #ff3c3c);
-  color: white;
-}
-
-.product-card {
-  transition: 0.3s;
-}
-.product-card:hover {
-  transform: translateY(-8px);
-}
-
-.btn-add {
-  border: 1px solid #dc3545;
-  color: #dc3545;
-}
-.btn-add:hover {
-  background: #dc3545;
-  color: white;
-}
-
-.pagination-custom {
-  padding: 10px;
-  background: white;
-  border-radius: 50px;
-}
-
-.page-link-custom {
+.page-num {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #eee;
+  transition: 0.3s;
+}
+.page-num.active {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+.page-arrow {
+  background: none;
+  border: 1px solid #eee;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- MODAL --- */
+.zen-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.zen-modal-box {
+  width: 1000px;
+  max-width: 95%;
+  background: #fff;
+  padding: 40px;
+  position: relative;
+  box-shadow: 0 50px 150px rgba(0, 0, 0, 0.1);
+}
+.zen-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+}
+.zen-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+.modal-title {
+  font-family: "Syncopate", sans-serif;
+  font-size: 1.8rem;
+  margin: 15px 0;
+  text-transform: uppercase;
+}
+.v-card-shop {
+  border: 1px solid #eee;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: 0.3s;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.v-card-shop:hover {
+  border-color: #000;
+  background: #f9f9f9;
+}
+.btn-zen-primary {
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* --- ANIMATION --- */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: 1s cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .zen-modal-grid {
+    grid-template-columns: 1fr;
+  }
+  .shop-header {
+    padding: 80px 0 40px;
+  }
 }
 </style>

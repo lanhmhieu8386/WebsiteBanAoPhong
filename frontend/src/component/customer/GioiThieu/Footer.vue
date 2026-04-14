@@ -1,107 +1,255 @@
 <template>
-  <footer class="footer-bg text-white">
-    <div class="overlay"></div>
+  <footer class="centered-luxury-footer">
+    <div class="dust-particles"></div>
 
-    <div class="container position-relative py-5 text-center">
-      <div class="mb-3">
-        <span class="fw-bold fs-5">0332654198</span>
-        <span class="mx-2">|</span>
-        <span>chiwiwi.vn</span>
+    <div class="container position-relative py-5">
+      <div class="footer-hero text-center mb-5">
+        <div class="logo-wrapper">
+          <h1 class="main-brand">CHIWIWIS</h1>
+          <div class="brand-line"></div>
+        </div>
+        <p class="brand-philosophy">THE NEW STANDARD OF LUXURY LIVING</p>
       </div>
 
-      <ul class="footer-menu mb-4">
-        <li>TRANG CHỦ</li>
-        <li>GIỚI THIỆU</li>
-        <li>SẢN PHẨM</li>
-        <li>MUA SẮM</li>
-        <li>TIN TỨC</li>
-        <li>TUYỂN DỤNG</li>
-      </ul>
+      <nav class="footer-nav-center mb-5">
+        <ul class="nav-list">
+          <li><router-link to="/" class="nav-item">Trang chủ</router-link></li>
+          <li>
+            <router-link to="/gioi-thieu" class="nav-item"
+              >Giới thiệu</router-link
+            >
+          </li>
+          <li>
+            <router-link to="/san-pham" class="nav-item">Sản phẩm</router-link>
+          </li>
+          <li>
+            <router-link to="/mua-sam" class="nav-item">Mua sắm</router-link>
+          </li>
+          <li>
+            <router-link to="/tin-tuc" class="nav-item">Tin tức</router-link>
+          </li>
+          <li>
+            <router-link to="/tuyen-dung" class="nav-item"
+              >Tuyển dụng</router-link
+            >
+          </li>
+        </ul>
+      </nav>
 
-      <div class="social mb-4">
-        <span class="icon">f</span>
-        <span class="icon">◎</span>
-        <span class="icon">♫</span>
+      <div class="footer-interaction text-center mb-5">
+        <div class="social-cluster mb-4">
+          <a href="#" class="social-circle">FACEBOOK</a>
+          <a href="#" class="social-circle">INSTAGRAM</a>
+          <a href="#" class="social-circle">TIKTOK</a>
+        </div>
+
+        <div class="contact-chips">
+          <div class="chip">
+            <span class="chip-label">CALL</span>
+            <span class="chip-value">0332654198</span>
+          </div>
+          <div class="chip-separator"></div>
+          <div class="chip">
+            <span class="chip-label">EMAIL</span>
+            <span class="chip-value">hieulm24@gmail.com</span>
+          </div>
+        </div>
       </div>
 
-      <hr class="border-light opacity-25" />
-
-      <div class="footer-info text-start mx-auto">
-        <p>
-          Website chiwiwi công ty TNHH 4 thành viên thành lập<br />
-          Trụ sở chính: B10, Dự án tổ hợp công trình hỗn hợp số 53 Triều Khúc,
-          Thanh Xuân, Hà Nội<br />
-          Giấy phép ĐKKD: 0108704192 cấp ngày 25/01/2026<br />
-          📞 Phone: 0332654198<br />
-          ✉ Contact Email: hieulm24@gmail.com
-        </p>
-        <p class="mt-3">© 2026 Chiwiwi's Group. All Rights Reserved.</p>
+      <div class="footer-legal-grid text-center">
+        <div class="legal-content">
+          <p class="legal-text">
+            Công ty TNHH 4 thành viên ChiWiWi • MST: 0108704192 cấp 25/01/2026
+          </p>
+          <p class="address-text">
+            B10, Dự án tổ hợp công trình hỗn hợp số 53 Triều Khúc, Thanh Xuân,
+            Hà Nội
+          </p>
+        </div>
+        <div class="copyright-bar mt-4">
+          <span class="copy-symbol">©</span> 2026 CHIWIWI'S GROUP. ALL RIGHTS
+          RESERVED.
+        </div>
       </div>
     </div>
   </footer>
 </template>
 
 <style scoped>
-.footer-bg {
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@200;400;600&display=swap");
+
+.centered-luxury-footer {
+  background: #ffffff;
+  color: #000;
+  padding: 80px 0 40px;
+  font-family: "Inter", sans-serif;
+  border-top: 1px solid #f0f0f0;
   position: relative;
-  background: url("@/assets/images/footer.jpg") center / cover no-repeat;
+  overflow: hidden;
 }
 
-.overlay {
+/* Hiệu ứng hạt bụi sang chảnh */
+.dust-particles {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background-image: radial-gradient(#eee 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.3;
+  pointer-events: none;
 }
 
-/* LOGO */
-.footer-logo {
-  max-width: 400px;
-  width: 100%;
-  height: auto;
+/* Brand Section */
+.main-brand {
+  font-family: "Cinzel", serif;
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: 15px;
+  margin-bottom: 10px;
+  color: #1a1a1a;
 }
 
-/* MENU */
-.footer-menu {
+.brand-line {
+  width: 60px;
+  height: 2px;
+  background: #000;
+  margin: 0 auto;
+}
+
+.brand-philosophy {
+  font-size: 0.65rem;
+  letter-spacing: 5px;
+  color: #999;
+  margin-top: 20px;
+  font-weight: 600;
+}
+
+/* Nav Center */
+.nav-list {
   list-style: none;
   padding: 0;
   display: flex;
   justify-content: center;
+  gap: 40px;
   flex-wrap: wrap;
-  gap: 20px;
-  font-size: 14px;
 }
 
-.footer-menu li {
-  cursor: pointer;
+.nav-item {
+  text-decoration: none;
+  color: #666;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: 0.4s;
+}
+
+.nav-item:hover {
+  color: #000;
+  letter-spacing: 4px;
+}
+
+/* Social & Contact Clusters */
+.social-cluster {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.social-circle {
+  text-decoration: none;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  position: relative;
+  padding: 5px 0;
+}
+
+.social-circle::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #000;
   transition: 0.3s;
 }
 
-.footer-menu li:hover {
-  color: #e53935;
+.social-circle:hover::after {
+  width: 100%;
 }
 
-/* SOCIAL */
-.social {
+.contact-chips {
   display: flex;
   justify-content: center;
-  gap: 15px;
-}
-
-.icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #777;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  gap: 20px;
 }
 
-/* INFO */
-.footer-info {
-  max-width: 900px;
-  font-size: 14px;
-  line-height: 1.7;
+.chip {
+  display: flex;
+  flex-direction: column;
+}
+
+.chip-label {
+  font-size: 0.55rem;
+  color: #aaa;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.chip-value {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.chip-separator {
+  width: 1px;
+  height: 30px;
+  background: #eee;
+}
+
+/* Legal Section */
+.footer-legal-grid {
+  border-top: 1px solid #f9f9f9;
+  padding-top: 40px;
+}
+
+.legal-text,
+.address-text {
+  font-size: 0.75rem;
+  color: #888;
+  margin-bottom: 5px;
+  font-weight: 300;
+}
+
+.copyright-bar {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #000;
+  letter-spacing: 2px;
+}
+
+.copy-symbol {
+  font-size: 1.2rem;
+  vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-list {
+    gap: 20px;
+  }
+  .main-brand {
+    font-size: 2rem;
+    letter-spacing: 8px;
+  }
+  .contact-chips {
+    flex-direction: column;
+  }
+  .chip-separator {
+    display: none;
+  }
 }
 </style>
