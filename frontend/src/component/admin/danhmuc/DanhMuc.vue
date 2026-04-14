@@ -5,7 +5,11 @@ import axiosClient from "@/auth/axiosClient";
 import iconEdit from "@/assets/icons/edit.png";
 import iconAdd from "@/assets/icons/add.png";
 import iconSearch from "@/assets/icons/search.png";
-//import iconDelete from "@/assets/icons/delete.png";
+import iconDelete from "@/assets/icons/cancel.png";
+import iconFirst from "@/assets/icons/first.png";
+import iconPrev from "@/assets/icons/prev.png";
+import iconNext from "@/assets/icons/next.png";
+import iconLast from "@/assets/icons/last.png";
 
 const loaiDanhSach = [
   { key: "danh-muc", label: "Danh mục" },
@@ -347,12 +351,20 @@ const xoaDuLieu = async (item) => {
   }
 };
 
+const goFirst = () => {
+  currentPage.value = 1;
+};
+
 const prevPage = () => {
   if (currentPage.value > 1) currentPage.value--;
 };
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++;
+};
+
+const goLast = () => {
+  currentPage.value = totalPages.value;
 };
 
 watch(loaiDangChon, async () => {
@@ -362,6 +374,10 @@ watch(loaiDangChon, async () => {
 });
 
 watch(pageSize, () => {
+  currentPage.value = 1;
+});
+
+watch([search, trangThai], () => {
   currentPage.value = 1;
 });
 
@@ -413,7 +429,7 @@ onMounted(() => {
 
       <div class="filter-item">
         <label>Số dòng</label>
-        <select v-model="pageSize">
+        <select v-model.number="pageSize">
           <option :value="5">5 / trang</option>
           <option :value="10">10 / trang</option>
           <option :value="20">20 / trang</option>
@@ -510,24 +526,53 @@ onMounted(() => {
         </tbody>
       </table>
 
-      <div class="pagination">
-        <button
-          class="btn-page"
-          :disabled="currentPage === 1"
-          @click="prevPage"
-        >
-          « Trước
-        </button>
+      <div class="pagination-wrapper">
+        <div class="page-size-box">
+          <span>Hiển thị</span>
+          <select v-model.number="pageSize" class="page-size-select">
+            <option :value="5">5</option>
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+          </select>
+          <span>bản ghi</span>
+        </div>
 
-        <span>Trang {{ currentPage }} / {{ totalPages }}</span>
+        <ul class="pagination">
+          <li class="page-item" @click="goFirst">
+            <button class="page-link" :disabled="currentPage === 1">
+              <img :src="iconFirst" />
+            </button>
+          </li>
 
-        <button
-          class="btn-page"
-          :disabled="currentPage === totalPages"
-          @click="nextPage"
-        >
-          Sau »
-        </button>
+          <li class="page-item" @click="prevPage">
+            <button class="page-link" :disabled="currentPage === 1">
+              <img :src="iconPrev" />
+            </button>
+          </li>
+
+          <li class="page-item active">
+            <button class="page-link">
+              {{ currentPage }}
+            </button>
+          </li>
+
+          <li class="page-item" @click="nextPage">
+            <button class="page-link" :disabled="currentPage === totalPages">
+              <img :src="iconNext" />
+            </button>
+          </li>
+
+          <li class="page-item" @click="goLast">
+            <button class="page-link" :disabled="currentPage === totalPages">
+              <img :src="iconLast" />
+            </button>
+          </li>
+        </ul>
+
+        <span class="pagination-info">
+          Hiển thị {{ danhSachHienThi.length }} / {{ totalItems }}
+          {{ currentConfig.title.toLowerCase() }}
+        </span>
       </div>
     </div>
 
@@ -614,7 +659,7 @@ onMounted(() => {
 }
 
 .tab-btn.active {
-  background: #3b6cff;
+  background: #da1432;
   color: white;
 }
 
@@ -629,7 +674,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #3b6cff;
+  background: #da1432;
   color: #fff;
   border: none;
   padding: 8px 14px;
@@ -684,7 +729,7 @@ onMounted(() => {
   padding: 0 16px;
   border: none;
   border-radius: 8px;
-  background: #3b6cff;
+  background: #da1432;
   color: #fff;
   display: flex;
   align-items: center;
@@ -793,26 +838,81 @@ onMounted(() => {
   color: #888;
 }
 
-.pagination {
-  margin-top: 16px;
+.pagination-wrapper {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
   align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.btn-page {
-  border: none;
-  background: #3b6cff;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
+.page-size-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.page-size-select {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
   cursor: pointer;
 }
 
-.btn-page:disabled {
-  background: #c7d2fe;
+.page-size-select:focus {
+  outline: none;
+  border-color: #da1432;
+}
+
+.pagination {
+  background: #f8f4f5;
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+}
+
+.page-item .page-link {
+  min-width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.page-link img {
+  width: 16px;
+  height: 16px;
+}
+
+.page-item.active .page-link {
+  background: #da1432;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(59, 108, 255, 0.35);
+}
+
+.page-item:not(.active) .page-link:hover:not(:disabled) {
+  background: #f1f3f5;
+}
+
+.page-link:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #222;
 }
 
 .modal-overlay {
@@ -855,11 +955,34 @@ onMounted(() => {
 }
 
 .btn-save {
-  background: #3b6cff;
+  background: #da1432;
   color: white;
   border: none;
   padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+@media (max-width: 992px) {
+  .filter-box {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pagination-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-box {
+    grid-template-columns: 1fr;
+  }
+
+  .box-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 </style>

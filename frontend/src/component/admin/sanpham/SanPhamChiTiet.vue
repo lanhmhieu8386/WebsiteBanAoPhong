@@ -439,7 +439,7 @@ textarea {
   height: 80px;
 }
 .btn-save {
-  background: #3b6cff;
+  background: #da1432;
   color: white;
   border: none;
   padding: 10px 16px;
@@ -543,7 +543,7 @@ textarea {
   margin-bottom: 15px;
 }
 .btn-back {
-  background: #3b6cff;
+  background: #da1432;
   color: white;
   border: none;
   padding: 8px 16px;

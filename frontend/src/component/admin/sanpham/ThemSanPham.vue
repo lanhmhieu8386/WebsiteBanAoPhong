@@ -161,7 +161,7 @@ const luu = () => {
   width: 40px;
   height: 40px;
   border: none;
-  background: #3b6cff;
+  background: #da1432;
   color: white;
   border-radius: 8px;
   font-size: 18px;
@@ -184,7 +184,7 @@ const luu = () => {
 }
 
 .btn-save {
-  background: #3b6cff;
+  background: #da1432;
   color: white;
   border: none;
   padding: 10px 20px;

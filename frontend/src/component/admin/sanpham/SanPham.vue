@@ -393,7 +393,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #3b6cff;
+  background: #da1432;
   color: #fff;
   border: none;
   padding: 8px 14px;
@@ -440,7 +440,7 @@ onMounted(() => {
   padding: 0 16px;
   border: none;
   border-radius: 8px;
-  background: #3b6cff;
+  background: #da1432;
   color: #fff;
   display: flex;
   align-items: center;
@@ -549,7 +549,7 @@ onMounted(() => {
 
 .page-size-select:focus {
   outline: none;
-  border-color: #3b6cff;
+  border-color: #da1432;
 }
 
 /* ===== PAGINATION BUTTON ===== */
@@ -580,7 +580,7 @@ onMounted(() => {
 
 /* ===== ACTIVE PAGE ===== */
 .page-item.active .page-link {
-  background: #3b6cff;
+  background: #da1432;
   color: #fff;
   box-shadow: 0 4px 10px rgba(59, 108, 255, 0.35);
 }
