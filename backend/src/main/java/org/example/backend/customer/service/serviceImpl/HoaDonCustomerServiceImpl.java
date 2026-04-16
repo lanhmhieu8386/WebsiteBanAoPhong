@@ -14,12 +14,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Service
 public class HoaDonCustomerServiceImpl implements HoaDonCustomerService {
-
+   
     @Autowired
     private HoaDonCustomerRepository hoaDonCustomerRepository;
     @Autowired
@@ -66,7 +67,7 @@ public class HoaDonCustomerServiceImpl implements HoaDonCustomerService {
                 khachHang,
                 email
         );
-
+        hoaDon.setHoaDonChiTiets(new ArrayList<>());
         hoaDon.setTrangThai(TrangThaiHoaDon.CHO_XAC_NHAN.getValue());
         hoaDon = hoaDonCustomerRepository.save(hoaDon);
 
@@ -90,7 +91,13 @@ public class HoaDonCustomerServiceImpl implements HoaDonCustomerService {
             ct.setGia(gia);
 
             hoaDonChiTietCustomerRepository.save(ct);
+
+            hoaDon.getHoaDonChiTiets().add(ct);
         }
+        System.out.println("===== REQUEST DEBUG =====");
+        System.out.println("SDT: " + request.getSoDienThoai());
+        System.out.println("Ten: " + request.getTenNguoiNhan());
+        System.out.println("DiaChi: " + request.getDiaChi());
 
         hoaDon.setTongTien(tongTien);
         hoaDonCustomerRepository.save(hoaDon);
@@ -158,7 +165,7 @@ public class HoaDonCustomerServiceImpl implements HoaDonCustomerService {
         if (hoaDon.getTrangThai() != 1) {
             throw new RuntimeException("Không thể hủy đơn này");
         }
-        
+
         hoaDon.setTrangThai(0);
         hoaDon.setNgayCapNhat(new Date());
 

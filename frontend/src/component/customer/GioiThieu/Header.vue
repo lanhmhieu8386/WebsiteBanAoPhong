@@ -75,9 +75,11 @@ const logout = () => {
       <div class="nav-side justify-content-end">
         <template v-if="!token">
           <div class="auth-module">
-            <router-link to="/dang-nhap" class="auth-text">Sign In</router-link>
+            <router-link to="/dang-nhap" class="auth-text"
+              >Đăng nhập</router-link
+            >
             <router-link to="/dang-ky" class="auth-btn-pill"
-              >Create Account</router-link
+              >Tạo tài khoản</router-link
             >
           </div>
         </template>

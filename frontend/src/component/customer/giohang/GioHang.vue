@@ -2,8 +2,15 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { deleteGioHang, hienThiGioHang, updateGioHang } from "@/api/customer/gioHangApi";
-import aoPhong1 from "@/assets/images/aophong1.jpg";
 
+import aophong1 from "@/assets/images/aophong1.png";
+import aophong2 from "@/assets/images/aophong2.png";
+const fallbackImages = [aophong1, aophong2];
+
+const getRandomImage = () => {
+  const index = Math.floor(Math.random() * fallbackImages.length);
+  return fallbackImages[index];
+};
 const router = useRouter();
 const cartItems = ref([]);
 const loading = ref(false);
@@ -11,15 +18,7 @@ const loading = ref(false);
 const formatPrice = (price) =>
   new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
-const getImageUrl = (imageName) => {
-  if (!imageName) return aoPhong1;
-  if (imageName.startsWith("http")) return imageName;
-  try {
-    return new URL(`../assets/images/${imageName}`, import.meta.url).href;
-  } catch (e) {
-    return aoPhong1;
-  }
-};
+
 
 const fetchCart = async () => {
   loading.value = true;
@@ -128,7 +127,11 @@ onMounted(() => {
             </div>
             <div class="c-info">
               <div class="p-card">
-                <img :src="getImageUrl(item.hinhAnh)" class="p-img" />
+            <img
+                    :src="item.hinhAnh ? item.hinhAnh : getRandomImage()"
+                    class="product-img"
+                    alt=""
+                  />
                 <div class="p-txt">
                   <p class="p-name">{{ item.tenSanPham }}</p>
                   <p class="p-var">
@@ -201,6 +204,15 @@ onMounted(() => {
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap");
 
+.product-img {
+  width: 30%;
+  height: 30%;
+  object-fit: cover;
+  transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.zen-product-card:hover .product-img {
+  transform: scale(1.08);
+}
 .cart-page {
   background: #fcfcfc;
   font-family: "Plus Jakarta Sans", sans-serif;

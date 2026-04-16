@@ -3,12 +3,19 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { thanhToanDonHang } from "@/api/customer/hoaDonCustomerApi";
 const router = useRouter();
+import aophong1 from "@/assets/images/aophong1.png";
+import aophong2 from "@/assets/images/aophong2.png";
+const fallbackImages = [aophong1, aophong2];
 
+const getRandomImage = () => {
+  const index = Math.floor(Math.random() * fallbackImages.length);
+  return fallbackImages[index];
+};
 const loading = ref(false);
 
 const address = ref({
   name: "Lãnh Minh Hiếu",
-  phone: "(+84) 332 654 198",
+  phone: "0332 654 198",
   detail:
     "Số 405, Ngõ 68 Đường Phú Diễn, Phường Phú Diễn, Quận Bắc Từ Liêm, Hà Nội",
 });
@@ -58,7 +65,7 @@ const placeOrder = async () => {
 
     localStorage.removeItem("checkout_items");
 
-    router.push("/dat-hang-thanh-cong");
+    router.push("/gio-hang");
   } catch (err) {
     console.error(err);
     alert("Checkout lỗi rồi ");
@@ -84,7 +91,7 @@ const getImageUrl = (imageName) => {
       <div class="row g-0 main-content shadow-sm">
         <div class="col-lg-7 left-panel p-5">
           <section class="mb-5">
-            <h5 class="step-title">01 / SHIPPING ADDRESS</h5>
+            <h5 class="step-title">01 / ĐỊA CHỈ GIAO</h5>
             <div class="address-card mt-3">
               <div class="d-flex justify-content-between">
                 <p class="mb-1 fw-bold">
@@ -97,21 +104,17 @@ const getImageUrl = (imageName) => {
           </section>
 
           <section class="mb-5">
-            <h5 class="step-title">02 / PAYMENT METHOD</h5>
+            <h5 class="step-title">02 / PHƯƠNG THỨC THANH TOÁN</h5>
             <div class="d-flex gap-3 mt-3">
               <label class="pay-label">
                 <input type="radio" name="pay" checked />
-                <div class="pay-tile">CASH ON DELIVERY</div>
-              </label>
-              <label class="pay-label">
-                <input type="radio" name="pay" />
-                <div class="pay-tile">BANK TRANSFER</div>
+                <div class="pay-tile">THANH TOÁN KHI NHẬN HÀNG</div>
               </label>
             </div>
           </section>
 
           <section>
-            <h5 class="step-title">03 / ORDER NOTES</h5>
+            <h5 class="step-title">03 / GHI CHÚ</h5>
             <textarea
               class="minimal-input mt-3"
               rows="2"
@@ -129,7 +132,11 @@ const getImageUrl = (imageName) => {
               :key="item.id"
               class="product-item d-flex gap-3 mb-4"
             >
-              <img :src="getImageUrl(item.hinhAnh)" class="p-img" />
+              <img
+                :src="item.hinhAnh ? item.hinhAnh : getRandomImage()"
+                class="product-img"
+                alt=""
+              />
               <div class="p-info flex-grow-1">
                 <p class="p-name">{{ item.tenSanPham }}</p>
                 <p class="p-meta">
@@ -164,7 +171,7 @@ const getImageUrl = (imageName) => {
             @click="placeOrder"
             :disabled="loading"
           >
-            {{ loading ? "PROCESSING..." : "PLACE ORDER NOW" }}
+            {{ loading ? "ĐANG ĐẶT..." : "ĐẶT HÀNG" }}
           </button>
 
           <p class="policy-text text-center mt-4">
@@ -245,6 +252,15 @@ const getImageUrl = (imageName) => {
 .pay-label input {
   display: none;
 }
+.product-img {
+  width: 70%;
+  height: 700%;
+  object-fit: cover;
+  transition: 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.zen-product-card:hover .product-img {
+  transform: scale(1.08);
+}
 .pay-tile {
   border: 1px solid #eee;
   padding: 15px;
@@ -255,8 +271,8 @@ const getImageUrl = (imageName) => {
   transition: 0.2s;
 }
 .pay-label input:checked + .pay-tile {
-  border-color: #000;
-  background: #000;
+  border-color: #312e2e;
+  background: #3e3c3c;
   color: #fff;
 }
 

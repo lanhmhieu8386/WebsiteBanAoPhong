@@ -24,6 +24,7 @@ public class HoaDonMapper {
         hd.setKhachHang(khachHang);
         hd.setTrangThai(request.getTrangThai());
         hd.setTongTien(BigDecimal.ZERO);
+        hd.setSoDienThoai(request.getSoDienThoai());
         hd.setDiaChiGiaoHang(request.getDiaChi());
         hd.setNgayTao(new Date());
         hd.setNguoiTao(nguoiTao);

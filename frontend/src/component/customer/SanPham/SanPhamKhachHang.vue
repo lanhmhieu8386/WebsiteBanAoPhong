@@ -42,7 +42,7 @@ const handleAddToCart = async (product) => {
     window.dispatchEvent(new Event("update-cart"));
 
     // Toast xịn thay cho alert
-    alert("✅ Added to your collection");
+    alert("Thêm vào giỏ hàng thành công");
   } catch (err) {
     console.error(err);
   }

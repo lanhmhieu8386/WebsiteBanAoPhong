@@ -31,6 +31,8 @@ public class HoaDonCustomer {
     @Column(name = "trang_thai")
     private Integer trangThai;
 
+    @Column(name = "so_dien_thoai", length = 20)
+    private String soDienThoai;
     @Column(name = "tong_tien")
     private BigDecimal tongTien;
 
