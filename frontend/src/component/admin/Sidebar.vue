@@ -13,7 +13,7 @@ defineProps({
 
 /* ===== ICON MENU ===== */
 import hoaDon from "@/assets/icons/datban.png";
-import sanPham from "@/assets/icons/datban.png";
+import sanPham from "@/assets/icons/t-shirt.png";
 import danhMuc from "@/assets/icons/danhmuc.png";
 import nhanVien from "@/assets/icons/taiKhoan.png";
 import khachHang from "@/assets/icons/taiKhoan.png";
@@ -49,11 +49,11 @@ const menus = [
     path: "/admin/nhan-vien",
     icon: nhanVien,
   },
-  {
-    name: "Quản lý KhachHang",
-    path: "/admin/khach-hang",
-    icon: khachHang,
-  },
+  // {
+  //   name: "Quản lý KhachHang",
+  //   path: "/admin/khach-hang",
+  //   icon: khachHang,
+  // },
 ];
 
 /* ===== QUẢN LÝ SUBMENU ===== */
